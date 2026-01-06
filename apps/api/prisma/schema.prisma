@@ -1,0 +1,145 @@
+// FinTrack - Personal Finance Tracker
+// Prisma Schema for PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+enum Role {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  firstName     String?
+  lastName      String?
+  avatar        String?
+  role          Role      @default(MEMBER)
+  isActive      Boolean   @default(true)
+  
+  // Refresh Token for JWT
+  refreshToken  String?
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  wallets       Wallet[]
+  transactions  Transaction[]
+  categories    Category[]
+  
+  @@map("users")
+}
+
+// ============================================
+// WALLET (Ví tiền)
+// ============================================
+
+enum WalletType {
+  CASH
+  BANK
+  CREDIT_CARD
+  E_WALLET
+  INVESTMENT
+}
+
+model Wallet {
+  id          String     @id @default(uuid())
+  name        String
+  type        WalletType @default(CASH)
+  balance     Decimal    @default(0) @db.Decimal(15, 2)
+  currency    String     @default("VND")
+  color       String?    @default("#3B82F6")
+  icon        String?
+  isActive    Boolean    @default(true)
+  
+  // Owner
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  // Relations
+  transactions Transaction[]
+  
+  @@map("wallets")
+}
+
+// ============================================
+// CATEGORY (Danh mục thu/chi)
+// ============================================
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+model Category {
+  id          String          @id @default(uuid())
+  name        String
+  type        TransactionType
+  icon        String?
+  color       String?         @default("#6B7280")
+  isDefault   Boolean         @default(false)
+  
+  // Owner (null = system default category)
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  // Relations
+  transactions Transaction[]
+  
+  @@map("categories")
+}
+
+// ============================================
+// TRANSACTION (Giao dịch)
+// ============================================
+
+model Transaction {
+  id          String          @id @default(uuid())
+  amount      Decimal         @db.Decimal(15, 2)
+  type        TransactionType
+  description String?
+  note        String?
+  date        DateTime        @default(now())
+  
+  // Relations
+  walletId    String
+  wallet      Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  categoryId  String
+  category    Category        @relation(fields: [categoryId], references: [id])
+  
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  @@index([userId, date])
+  @@index([walletId, date])
+  @@map("transactions")
+}
