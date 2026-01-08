@@ -2,6 +2,23 @@
 
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 
+// ════════════════════════════════════════════════════════════
+// 📌 SECURITY NOTE - TODO for Phase 3
+// ════════════════════════════════════════════════════════════
+// Current: Using localStorage for JWT tokens (LEARNING PURPOSE)
+// Future: Migrate to HttpOnly Cookie for production security
+//
+// Reasons to migrate:
+//   ✅ localStorage vulnerable to XSS attacks
+//   ✅ Cookie with HttpOnly flag prevents JavaScript access
+//   ✅ More secure for production applications
+//
+// Will implement in Phase 3 with:
+//   - HttpOnly cookies
+//   - CSRF protection
+//   - Secure & SameSite flags
+// ════════════════════════════════════════════════════════════
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 if (!API_URL) {
@@ -59,7 +76,7 @@ const processQueue = (error: Error | null = null) => {
 axiosInstance.interceptors.response.use(
   (response) => {
     console.log('✅', response.status, response.config.url)
-    return response.data // Tự động unwrap data
+    return response.data
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & {
