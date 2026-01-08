@@ -20,11 +20,12 @@ export default function WalletsPage() {
   // ────────────────────────────────────────────────────────────
   const {
     data: wallets = [], // Default [] nếu chưa có data
-    isLoading,          // Loading state tự động
-    error,              // Error state tự động
+    isLoading, // Loading state tự động
+    error // Error state tự động
   } = useQuery({
-    queryKey: ['wallets'],           // Unique key để identify query
-    queryFn: walletsService.getAll,  // Function để fetch data
+    queryKey: ['wallets'], // Unique key để identify query
+    queryFn: walletsService.getAll, // Function để fetch data
+    staleTime: 1000 * 60 * 2 // 2 minutes
   })
 
   // ────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ export default function WalletsPage() {
     onError: (error: any) => {
       console.error('❌ Error:', error)
       alert(error.response?.data?.message || 'Failed to delete wallet')
-    },
+    }
   })
 
   const handleDelete = (id: string, name: string) => {
@@ -91,7 +92,10 @@ export default function WalletsPage() {
       {error && (
         <div className='bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6'>
           <p className='font-medium'>Lỗi:</p>
-          <p>{(error as any)?.response?.data?.message || 'Failed to fetch wallets'}</p>
+          <p>
+            {(error as any)?.response?.data?.message ||
+              'Failed to fetch wallets'}
+          </p>
         </div>
       )}
 
