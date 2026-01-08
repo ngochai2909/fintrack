@@ -1,15 +1,16 @@
 'use client'
 
 // ════════════════════════════════════════════════════════════
-// EDIT WALLET PAGE
+// EDIT WALLET PAGE - WITH REACT QUERY
 // ════════════════════════════════════════════════════════════
-// Form để chỉnh sửa wallet
+// Sử dụng React Query để fetch & update wallet
 // ════════════════════════════════════════════════════════════
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { walletsService } from '@/services/wallets.service'
-import { Wallet, UpdateWalletDto } from '@/types/wallet'
+import { UpdateWalletDto } from '@/types/wallet'
 import Link from 'next/link'
 
 const CURRENCIES = [
@@ -23,72 +24,99 @@ export default function EditWalletPage() {
   const router = useRouter()
   const params = useParams()
   const walletId = params?.id as string
+  const queryClient = useQueryClient()
 
   // ────────────────────────────────────────────────────────────
   // State Management
   // ────────────────────────────────────────────────────────────
-  const [wallet, setWallet] = useState<Wallet | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState<UpdateWalletDto>({
-    name: '',
-    balance: 0,
-    currency: 'VND'
+  // ────────────────────────────────────────────────────────────
+  // ✅ REACT QUERY - Fetch Wallet by ID
+  // ────────────────────────────────────────────────────────────
+  // Thay thế: useState + useEffect + fetchWallet
+  // ────────────────────────────────────────────────────────────
+  const {
+    data: wallet,
+    isLoading,
+    error: fetchError
+  } = useQuery({
+    queryKey: ['wallet', walletId],
+    queryFn: () => walletsService.getById(walletId),
+    enabled: !!walletId // Chỉ fetch khi có walletId
+  })
+
+  // Initialize formData from wallet data
+  const [formData, setFormData] = useState<UpdateWalletDto>(() => ({
+    name: wallet?.name || '',
+    balance: wallet?.balance || 0,
+    currency: wallet?.currency || 'VND'
+  }))
+
+  // Update formData khi wallet data thay đổi (chỉ 1 lần)
+  useEffect(() => {
+    if (wallet && !formData.name) {
+      setFormData({
+        name: wallet.name,
+        balance: wallet.balance,
+        currency: wallet.currency
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wallet])
+
+  // ────────────────────────────────────────────────────────────
+  // ✅ REACT QUERY - Update Mutation
+  // ────────────────────────────────────────────────────────────
+  const updateMutation = useMutation({
+    mutationFn: (data: UpdateWalletDto) =>
+      walletsService.update(walletId, data),
+    onSuccess: () => {
+      // Invalidate cả wallets list và wallet detail
+      queryClient.invalidateQueries({ queryKey: ['wallets'] })
+      queryClient.invalidateQueries({ queryKey: ['wallet', walletId] })
+      alert('✅ Cập nhật ví thành công!')
+      router.push('/wallets')
+    },
+    onError: (err) => {
+      console.error('❌ Error:', err)
+      const error = err as { response?: { data?: { message?: string } } }
+      setError(error.response?.data?.message || 'Failed to update wallet')
+    }
   })
 
   // ────────────────────────────────────────────────────────────
-  // TODO 1: Fetch wallet data khi component mount
-  // ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    // TODO: Implement fetchWallet()
-    // Gợi ý:
-    // 1. Gọi walletsService.getById(walletId)
-    // 2. Set wallet state
-    // 3. Set formData với data từ wallet
-    // 4. Handle error nếu có
-
-    if (walletId) {
-      fetchWallet()
-    }
-  }, [walletId])
-
-  const fetchWallet = async () => {
-    // TODO: Implement me!
-    console.log('TODO: Fetch wallet', walletId)
-  }
-
-  // ────────────────────────────────────────────────────────────
-  // TODO 2: Handle input change
+  // Handle input change
   // ────────────────────────────────────────────────────────────
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    // TODO: Implement me! (Giống như Create page)
-    console.log('TODO: Handle change')
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'balance' ? parseFloat(value) || 0 : value
+    }))
   }
 
   // ────────────────────────────────────────────────────────────
-  // TODO 3: Handle form submit
+  // Handle form submit
   // ────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // TODO: Implement me!
-    // Gợi ý:
-    // 1. Validate form
-    // 2. Gọi walletsService.update(walletId, formData)
-    // 3. Navigate về /wallets
-    // 4. Handle error
+    if (!formData.name?.trim()) {
+      setError('Vui lòng nhập tên ví')
+      return
+    }
 
-    console.log('TODO: Update wallet', walletId, formData)
+    setError(null)
+    updateMutation.mutate(formData)
   }
 
   // ────────────────────────────────────────────────────────────
   // Loading State
   // ────────────────────────────────────────────────────────────
-  if (loading) {
+  if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
@@ -102,7 +130,7 @@ export default function EditWalletPage() {
   // ────────────────────────────────────────────────────────────
   // Not Found State
   // ────────────────────────────────────────────────────────────
-  if (!wallet) {
+  if (fetchError || !wallet) {
     return (
       <div className='container mx-auto px-4 py-8 max-w-2xl'>
         <div className='bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg'>
@@ -202,10 +230,10 @@ export default function EditWalletPage() {
         <div className='flex gap-4'>
           <button
             type='submit'
-            disabled={submitting}
+            disabled={updateMutation.isPending}
             className='flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg'
           >
-            {submitting ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+            {updateMutation.isPending ? 'Đang lưu...' : 'Lưu Thay Đổi'}
           </button>
           <Link
             href='/wallets'
@@ -218,4 +246,3 @@ export default function EditWalletPage() {
     </div>
   )
 }
-

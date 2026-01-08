@@ -1,13 +1,14 @@
 'use client'
 
 // ════════════════════════════════════════════════════════════
-// CREATE WALLET PAGE
+// CREATE WALLET PAGE - WITH REACT QUERY
 // ════════════════════════════════════════════════════════════
-// Form để tạo wallet mới
+// Sử dụng React Query Mutation để create wallet
 // ════════════════════════════════════════════════════════════
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { walletsService } from '@/services/wallets.service'
 import { CreateWalletDto } from '@/types/wallet'
 import Link from 'next/link'
@@ -21,15 +22,12 @@ const CURRENCIES = [
 
 export default function NewWalletPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   // ────────────────────────────────────────────────────────────
   // State Management
   // ────────────────────────────────────────────────────────────
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // TODO 1: Tạo state cho form data
-  // Gợi ý: Dùng useState<CreateWalletDto>
   const [formData, setFormData] = useState<CreateWalletDto>({
     name: '',
     balance: 0,
@@ -37,35 +35,52 @@ export default function NewWalletPage() {
   })
 
   // ────────────────────────────────────────────────────────────
-  // TODO 2: Handle input change
+  // ✅ REACT QUERY - Create Mutation
+  // ────────────────────────────────────────────────────────────
+  // Thay thế: loading state + try-catch trong handleSubmit
+  // ────────────────────────────────────────────────────────────
+  const createMutation = useMutation({
+    mutationFn: (data: CreateWalletDto) => walletsService.create(data),
+    onSuccess: () => {
+      // Invalidate wallets query để refetch list
+      queryClient.invalidateQueries({ queryKey: ['wallets'] })
+      alert('✅ Tạo ví thành công!')
+      router.push('/wallets')
+    },
+    onError: (err) => {
+      console.error('❌ Error:', err)
+      const error = err as { response?: { data?: { message?: string } } }
+      setError(error.response?.data?.message || 'Failed to create wallet')
+    }
+  })
+
+  // ────────────────────────────────────────────────────────────
+  // Handle input change
   // ────────────────────────────────────────────────────────────
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    // TODO: Implement me!
-    // Gợi ý:
-    // 1. Lấy name và value từ e.target
-    // 2. Update formData state
-    // 3. Chú ý: balance là number, cần parseFloat()
-
-    console.log('TODO: Handle change', e.target.name, e.target.value)
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === 'balance' ? parseFloat(value) || 0 : value
+    }))
   }
 
   // ────────────────────────────────────────────────────────────
-  // TODO 3: Handle form submit
+  // Handle form submit
   // ────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // TODO: Implement me!
-    // Gợi ý:
-    // 1. Validate form (name không được empty)
-    // 2. Set loading = true
-    // 3. Gọi walletsService.create(formData)
-    // 4. Navigate về /wallets (dùng router.push)
-    // 5. Handle error nếu có
+    // Validation
+    if (!formData.name.trim()) {
+      setError('Vui lòng nhập tên ví')
+      return
+    }
 
-    console.log('TODO: Submit form', formData)
+    setError(null)
+    createMutation.mutate(formData)
   }
 
   // ────────────────────────────────────────────────────────────
@@ -171,10 +186,10 @@ export default function NewWalletPage() {
         <div className='flex gap-4'>
           <button
             type='submit'
-            disabled={loading}
+            disabled={createMutation.isPending}
             className='flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-6 py-3 rounded-lg font-medium transition-colors'
           >
-            {loading ? 'Đang tạo...' : 'Tạo Ví'}
+            {createMutation.isPending ? 'Đang tạo...' : 'Tạo Ví'}
           </button>
           <Link
             href='/wallets'
@@ -187,4 +202,3 @@ export default function NewWalletPage() {
     </div>
   )
 }
-

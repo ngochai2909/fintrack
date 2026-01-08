@@ -1,61 +1,60 @@
 'use client'
 
 // ════════════════════════════════════════════════════════════
-// WALLETS LIST PAGE
+// WALLETS LIST PAGE - WITH REACT QUERY
 // ════════════════════════════════════════════════════════════
-// Trang này hiển thị danh sách tất cả wallets
+// Sử dụng React Query để quản lý data fetching & caching
 // ════════════════════════════════════════════════════════════
 
-import { useEffect, useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { walletsService } from '@/services/wallets.service'
-import { Wallet } from '@/types/wallet'
 import Link from 'next/link'
 
 export default function WalletsPage() {
-  // ────────────────────────────────────────────────────────────
-  // State Management
-  // ────────────────────────────────────────────────────────────
-  const [wallets, setWallets] = useState<Wallet[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   // ────────────────────────────────────────────────────────────
-  // TODO 1: Fetch wallets khi component mount
+  // ✅ REACT QUERY - Fetch Wallets
   // ────────────────────────────────────────────────────────────
-  useEffect(() => {
-    // TODO: Implement fetchWallets()
-    // Gợi ý:
-    // 1. Set loading = true
-    // 2. Gọi walletsService.getAll()
-    // 3. Set data vào state
-    // 4. Handle error nếu có
-    // 5. Set loading = false
-
-    fetchWallets()
-  }, [])
-
-  const fetchWallets = async () => {
-    // TODO: Implement me!
-    console.log('TODO: Fetch wallets from API')
-  }
+  // Thay thế: useState + useEffect + fetchWallets
+  // ────────────────────────────────────────────────────────────
+  const {
+    data: wallets = [], // Default [] nếu chưa có data
+    isLoading,          // Loading state tự động
+    error,              // Error state tự động
+  } = useQuery({
+    queryKey: ['wallets'],           // Unique key để identify query
+    queryFn: walletsService.getAll,  // Function để fetch data
+  })
 
   // ────────────────────────────────────────────────────────────
-  // TODO 2: Implement Delete Handler
+  // ✅ REACT QUERY - Delete Mutation
   // ────────────────────────────────────────────────────────────
-  const handleDelete = async (id: string, name: string) => {
-    // TODO: Implement me!
-    // Gợi ý:
-    // 1. Confirm với user
-    // 2. Gọi walletsService.delete(id)
-    // 3. Remove khỏi state (filter)
-    // 4. Show success message
-    console.log('TODO: Delete wallet', id, name)
+  // Thay thế: handleDelete với manual state update
+  // ────────────────────────────────────────────────────────────
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => walletsService.delete(id),
+    onSuccess: () => {
+      // Tự động refetch danh sách wallets sau khi xóa
+      queryClient.invalidateQueries({ queryKey: ['wallets'] })
+      alert('✅ Xóa ví thành công!')
+    },
+    onError: (error: any) => {
+      console.error('❌ Error:', error)
+      alert(error.response?.data?.message || 'Failed to delete wallet')
+    },
+  })
+
+  const handleDelete = (id: string, name: string) => {
+    if (confirm(`Bạn có chắc muốn xóa ví "${name}"?`)) {
+      deleteMutation.mutate(id)
+    }
   }
 
   // ────────────────────────────────────────────────────────────
   // Render Loading State
   // ────────────────────────────────────────────────────────────
-  if (loading) {
+  if (isLoading) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
         <div className='text-center'>
@@ -76,7 +75,8 @@ export default function WalletsPage() {
         <div>
           <h1 className='text-3xl font-bold text-gray-900'>Quản lý Ví</h1>
           <p className='text-gray-600 mt-2'>
-            Tổng số ví: <span className='font-semibold'>{wallets.length}</span>
+            Tổng số ví:{' '}
+            <span className='font-semibold'>{wallets?.length || 0}</span>
           </p>
         </div>
         <Link
@@ -91,37 +91,84 @@ export default function WalletsPage() {
       {error && (
         <div className='bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-6'>
           <p className='font-medium'>Lỗi:</p>
-          <p>{error}</p>
+          <p>{(error as any)?.response?.data?.message || 'Failed to fetch wallets'}</p>
         </div>
       )}
 
-      {/* TODO 3: Hiển thị Empty State khi chưa có ví */}
-      {/* Gợi ý: Check wallets.length === 0 */}
-
-      {/* TODO 4: Hiển thị danh sách wallets */}
-      {/* Gợi ý:
-          - Map qua wallets array
-          - Mỗi wallet render trong 1 card
-          - Hiển thị: name, balance, currency
-          - Buttons: Edit, Delete
-      */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {wallets.map((wallet) => (
-          <div
-            key={wallet.id}
-            className='bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200'
+      {/* Empty State - Khi chưa có ví nào */}
+      {!isLoading && wallets.length === 0 && (
+        <div className='text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300'>
+          <div className='text-6xl mb-4'>💰</div>
+          <h3 className='text-xl font-semibold text-gray-900 mb-2'>
+            Chưa có ví nào
+          </h3>
+          <p className='text-gray-600 mb-6'>
+            Bắt đầu bằng cách tạo ví đầu tiên để quản lý tài chính của bạn.
+          </p>
+          <Link
+            href='/wallets/new'
+            className='inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors'
           >
-            {/* TODO: Render wallet info */}
-            <h3 className='text-xl font-bold'>{wallet.name}</h3>
-            <p className='text-2xl text-blue-600 mt-2'>
-              {wallet.balance} {wallet.currency}
-            </p>
+            🎉 Tạo Ví Đầu Tiên
+          </Link>
+        </div>
+      )}
 
-            {/* TODO: Add Edit & Delete buttons */}
-          </div>
-        ))}
-      </div>
+      {/* Danh sách Wallets */}
+      {wallets.length > 0 && (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+          {wallets.map((wallet) => (
+            <div
+              key={wallet.id}
+              className='bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200'
+            >
+              {/* Header với Edit/Delete buttons */}
+              <div className='flex justify-between items-start mb-4'>
+                <h3 className='text-xl font-bold text-gray-900'>
+                  {wallet.name}
+                </h3>
+                <div className='flex gap-2'>
+                  {/* Edit Button */}
+                  <Link
+                    href={`/wallets/${wallet.id}`}
+                    className='text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-2 rounded transition-colors'
+                    title='Chỉnh sửa'
+                  >
+                    ✏️
+                  </Link>
+
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => handleDelete(wallet.id, wallet.name)}
+                    className='text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors'
+                    title='Xóa'
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+
+              {/* Balance */}
+              <p className='text-3xl font-bold text-blue-600 mb-4'>
+                {wallet.balance.toLocaleString('vi-VN')} {wallet.currency}
+              </p>
+
+              {/* Metadata */}
+              <div className='text-sm text-gray-500 border-t pt-3'>
+                <p>
+                  Tạo: {new Date(wallet.createdAt).toLocaleDateString('vi-VN')}
+                </p>
+                {wallet.updatedAt !== wallet.createdAt && (
+                  <p className='mt-1'>
+                    Cập nhật:{' '}
+                    {new Date(wallet.updatedAt).toLocaleDateString('vi-VN')}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
-
