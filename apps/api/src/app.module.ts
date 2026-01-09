@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { WalletsModule } from './modules/wallets/wallets.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
     // Features
     AuthModule,
     WalletsModule,
+    CategoriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
