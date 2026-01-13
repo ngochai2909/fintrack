@@ -4,7 +4,7 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
@@ -42,13 +42,30 @@ export class CategoriesService {
     // TODO: Check if category with same name and type already exists for this user
     // Use: this.prisma.category.findFirst({ where: { ... } })
     // If exists, throw ConflictException
-
     // TODO: Create category with default color
     // Use: this.prisma.category.create({ data: { ... } })
     // Set: userId, name, type, icon, color (default: #6B7280)
-
     // TODO: Return created category
-    throw new Error('Not implemented');
+    const existingCat = await this.prisma.category.findFirst({
+      where: {
+        name: dto.name,
+        type: dto.type,
+      },
+    });
+    if (existingCat) {
+      throw new ConflictException(
+        'Category with this name and type already exists',
+      );
+    }
+    return this.prisma.category.create({
+      data: {
+        name: dto.name,
+        type: dto.type,
+        icon: dto.icon,
+        color: dto.color || '#6B7280',
+        userId: userId,
+      },
+    });
   }
 
   /**
@@ -65,15 +82,20 @@ export class CategoriesService {
    * TODO: Implement this method
    */
   async getCategories(userId: string) {
-    // TODO: Find all categories where:
-    // - userId === userId (user's categories)
-    // - OR userId === null AND isDefault === true (system defaults)
-    // Use: this.prisma.category.findMany({ where: { OR: [...] } })
-
-    // TODO: Order by isDefault DESC, then createdAt DESC
-
-    // TODO: Return categories
-    throw new Error('Not implemented');
+    const categories = await this.prisma.category.findMany({
+      where: {
+        OR: [
+          { userId }, // 1. Của user hiện tại
+          { userId: null, isDefault: true }, // 2. Của hệ thống
+        ],
+      },
+      // 👇 Sửa đoạn này thành mảng để đảm bảo thứ tự ưu tiên tuyệt đối
+      orderBy: [
+        { isDefault: 'desc' }, // True (Hệ thống) lên trước, False xuống dưới
+        { createdAt: 'desc' }, // Cái nào mới tạo thì hiện lên trên
+      ],
+    });
+    return categories;
   }
 
   /**
@@ -91,20 +113,27 @@ export class CategoriesService {
    *
    * NOTE: Users can access system default categories too!
    *
+   *
    * TODO: Implement this method
    */
   async getCategoryById(categoryId: string, userId: string) {
     // TODO: Find category by id
     // Use: this.prisma.category.findUnique({ where: { id: categoryId } })
-
     // TODO: If not found, throw NotFoundException
-
     // TODO: Check ownership
     // Allow if: category.userId === userId OR category.userId === null (system default)
     // If not allowed, throw ForbiddenException
-
-    // TODO: Return category
-    throw new Error('Not implemented');
+    // TODO: Return category]
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException('Category not found');
+    }
+    if (category.userId !== null && category.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this category');
+    }
+    return category;
   }
 
   /**
@@ -130,22 +159,38 @@ export class CategoriesService {
     userId: string,
     dto: UpdateCategoryDto,
   ) {
-    // TODO: Call getCategoryById to verify existence and ownership
-    // Store result in a variable: const category = await this.getCategoryById(...)
+    // 1. Lấy thông tin cũ & Check quyền sở hữu
+    const category = await this.getCategoryById(categoryId, userId);
 
-    // TODO: Prevent updating system default categories
-    // If category.userId === null, throw ForbiddenException('Cannot update system default category')
+    // 2. Chặn sửa danh mục hệ thống
+    if (category.userId === null) {
+      throw new ForbiddenException('Cannot update system default category');
+    }
 
-    // TODO: If dto.name is provided, check for duplicates
-    // Use: this.prisma.category.findFirst({ where: { ... } })
-    // Check: same userId, same type, same name, but different id
-    // If exists, throw ConflictException
+    // 3. Check trùng tên (Chỉ check khi có gửi tên mới lên)
+    if (dto.name) {
+      const existing = await this.prisma.category.findFirst({
+        where: {
+          userId,
+          // Mẹo: Nếu không gửi type mới, dùng lại type cũ để check
+          type: dto.type || category.type,
+          name: dto.name,
+          id: { not: categoryId }, // Trừ chính nó ra
+        },
+      });
 
-    // TODO: Update category
-    // Use: this.prisma.category.update({ where: { id: categoryId }, data: dto })
+      if (existing) {
+        throw new ConflictException(
+          `Category "${dto.name}" already exists for this type`,
+        );
+      }
+    }
 
-    // TODO: Return updated category
-    throw new Error('Not implemented');
+    // 4. Update
+    return this.prisma.category.update({
+      where: { id: categoryId },
+      data: dto,
+    });
   }
 
   /**
@@ -176,6 +221,19 @@ export class CategoriesService {
 
     // TODO: Return success message
     // Example: { message: 'Category deleted successfully' }
-    throw new Error('Not implemented');
+
+    const category = await this.getCategoryById(categoryId, userId);
+    if (category.userId === null) {
+      throw new ForbiddenException('Cannot delete default category');
+    }
+
+    await this.prisma.category.delete({
+      where: {
+        id: categoryId,
+      },
+    });
+    return {
+      message: 'delete successfully',
+    };
   }
 }

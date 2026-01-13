@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsOptional, Matches } from 'class-validator';
 import { TransactionType } from '@prisma/client';
 
 /**
@@ -10,14 +10,23 @@ import { TransactionType } from '@prisma/client';
  */
 export class UpdateCategoryDto {
   // TODO: Add @IsOptional() and @IsString() decorators
+  @IsOptional()
+  @IsString()
   name?: string;
 
   // TODO: Add @IsOptional(), @IsEnum(), and @IsIn() decorators
+  @IsOptional()
+  @IsEnum(TransactionType)
   type?: TransactionType;
 
   // TODO: Add @IsOptional() and @IsString() decorators
+  @IsOptional()
+  @IsString()
   icon?: string;
 
   // TODO: Add @IsOptional() and @IsString() decorators
+  @IsOptional()
+  @IsString()
+  @Matches(/^#([0-9a-fA-F]{6})$/)
   color?: string;
 }

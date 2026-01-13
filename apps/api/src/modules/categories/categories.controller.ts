@@ -12,7 +12,7 @@ import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 /**
  * CategoriesController - API endpoints for Categories
@@ -47,9 +47,7 @@ export class CategoriesController {
     @CurrentUser('id') userId: string,
     @Body() dto: CreateCategoryDto,
   ) {
-    // TODO: Call categoriesService.createCategory(userId, dto)
-    // TODO: Return result
-    throw new Error('Not implemented');
+    return this.categoriesService.createCategory(userId, dto);
   }
 
   /**
@@ -64,7 +62,7 @@ export class CategoriesController {
   async getCategories(@CurrentUser('id') userId: string) {
     // TODO: Call categoriesService.getCategories(userId)
     // TODO: Return result
-    throw new Error('Not implemented');
+    return this.categoriesService.getCategories(userId);
   }
 
   /**
@@ -80,7 +78,7 @@ export class CategoriesController {
   ) {
     // TODO: Call categoriesService.getCategoryById(id, userId)
     // TODO: Return result
-    throw new Error('Not implemented');
+    return this.categoriesService.getCategoryById(id, userId);
   }
 
   /**
@@ -98,7 +96,7 @@ export class CategoriesController {
   ) {
     // TODO: Call categoriesService.updateCategory(id, userId, dto)
     // TODO: Return result
-    throw new Error('Not implemented');
+    return this.categoriesService.updateCategory(id, userId, dto);
   }
 
   /**
@@ -114,6 +112,6 @@ export class CategoriesController {
   ) {
     // TODO: Call categoriesService.deleteCategory(id, userId)
     // TODO: Return result
-    throw new Error('Not implemented');
+    return this.categoriesService.deleteCategory(id, userId);
   }
 }
