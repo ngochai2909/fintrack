@@ -47,7 +47,8 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/wallets', label: 'Ví', icon: '💰' },
     { href: '/categories', label: 'Danh mục', icon: '📁' },
-    { href: '/transactions', label: 'Giao dịch', icon: '💳' }
+    { href: '/transactions', label: 'Giao dịch', icon: '💳' },
+    { href: '/profile', label: 'Tài khoản', icon: '👤' }
   ]
 
   return (

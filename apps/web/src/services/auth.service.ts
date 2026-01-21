@@ -103,5 +103,37 @@ export const authService = {
    */
   isAuthenticated(): boolean {
     return !!this.getAccessToken()
+  },
+
+  /**
+   * Lấy thông tin profile của user hiện tại
+   */
+  async getProfile(): Promise<any> {
+    return axiosInstance.get('/auth/profile')
+  },
+
+  /**
+   * Cập nhật thông tin profile
+   */
+  async updateProfile(data: { firstName?: string; lastName?: string; avatar?: string }): Promise<any> {
+    const updated = await axiosInstance.patch('/auth/profile', data)
+    
+    // Update user in localStorage
+    if (typeof window !== 'undefined') {
+      const currentUser = this.getUser()
+      if (currentUser) {
+        const updatedUser = { ...currentUser, ...updated }
+        localStorage.setItem('user', JSON.stringify(updatedUser))
+      }
+    }
+    
+    return updated
+  },
+
+  /**
+   * Đổi mật khẩu
+   */
+  async changePassword(data: { currentPassword: string; newPassword: string }): Promise<any> {
+    return axiosInstance.post('/auth/change-password', data)
   }
 }
