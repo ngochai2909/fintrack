@@ -1,263 +1,364 @@
-# 🚀 FinTrack - Personal Finance Tracker
+# 💰 FinTrack - Personal Finance Tracker
 
-Dự án thực hành ôn tập Fullstack (NestJS + Next.js) trong 7 ngày.
+A modern, full-stack personal finance management application built with **NestJS** and **Next.js**.
 
-## 📁 Cấu trúc dự án
+Track your income, expenses, wallets, and categories with beautiful charts and comprehensive statistics.
+
+---
+
+## ✨ Features
+
+### 🔐 Authentication
+- User registration and login
+- JWT-based authentication (Access + Refresh tokens)
+- Password change
+- Profile management
+
+### 💰 Wallets Management
+- Create, Read, Update, Delete wallets
+- Support multiple wallet types (Cash, Bank, Credit Card, E-Wallet, Investment)
+- Real-time balance tracking
+- Multi-currency support (VND, USD)
+
+### 📁 Categories Management
+- Income, Expense, and Transfer categories
+- System default categories + user custom categories
+- Icon and color customization
+- Category-based transaction grouping
+
+### 💳 Transactions Management
+- Create, Read, Update, Delete transactions
+- Automatic wallet balance updates
+- Transaction types: Income, Expense, Transfer*
+- Date, amount, description, and notes
+- Category and wallet selection
+- Search and filter by type
+- Grouped by date display
+
+### 📊 Dashboard & Analytics
+- Total balance across all wallets
+- Monthly income and expense statistics
+- Recent transactions (last 10)
+- **Line Chart**: 30-day income/expense trend
+- **Pie Charts**: Category-wise breakdown
+- Auto-refresh every minute
+
+### 👤 Profile & Settings
+- View account information
+- Update profile (name, avatar)
+- Change password with validation
+- Account security features
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend (API)
+- **Framework**: NestJS (Node.js)
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Authentication**: JWT (Passport.js)
+- **Validation**: class-validator
+- **Password Hashing**: bcrypt
+- **API Style**: REST
+
+### Frontend (Web)
+- **Framework**: Next.js 14+ (App Router)
+- **UI Library**: React 18
+- **Styling**: Tailwind CSS
+- **Data Fetching**: TanStack Query (React Query)
+- **HTTP Client**: Axios
+- **Charts**: Recharts
+- **TypeScript**: Full type safety
+
+---
+
+## 🏗️ Architecture
 
 ```
 fintrack/
 ├── apps/
-│   ├── api/          # NestJS Backend
+│   ├── api/                    # NestJS Backend
 │   │   ├── src/
 │   │   │   ├── modules/
-│   │   │   │   ├── auth/       # JWT Authentication & RBAC
-│   │   │   │   ├── prisma/     # Database ORM
-│   │   │   │   ├── users/      # User management (TODO)
-│   │   │   │   ├── wallets/    # Wallet management (TODO)
-│   │   │   │   ├── categories/ # Category management (TODO)
-│   │   │   │   └── transactions/ # Transaction management (TODO)
-│   │   │   └── common/
-│   │   │       ├── decorators/ # Custom decorators
-│   │   │       ├── filters/    # Exception filters
-│   │   │       └── guards/     # Auth guards
-│   │   └── prisma/
-│   │       └── schema.prisma   # Database schema
+│   │   │   │   ├── auth/       # Authentication & Profile
+│   │   │   │   ├── wallets/    # Wallets CRUD
+│   │   │   │   ├── categories/ # Categories CRUD
+│   │   │   │   ├── transactions/ # Transactions + Balance Logic
+│   │   │   │   ├── dashboard/  # Statistics & Analytics
+│   │   │   │   └── prisma/     # Database Service
+│   │   │   ├── common/         # Decorators, Guards
+│   │   │   └── main.ts
+│   │   ├── prisma/
+│   │   │   └── schema.prisma   # Database Schema
+│   │   └── .env
 │   │
-│   └── web/          # Next.js Frontend
-│       └── src/
-│           ├── app/
-│           │   ├── (auth)/     # Login, Register pages
-│           │   └── (dashboard)/ # Dashboard, Transactions pages
-│           ├── components/     # Reusable UI components
-│           ├── hooks/          # Custom React hooks
-│           ├── lib/            # Utilities, API client
-│           ├── services/       # API services
-│           └── types/          # TypeScript types
+│   └── web/                    # Next.js Frontend
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── (auth)/     # Auth Pages (Login, Register)
+│       │   │   └── (dashboard)/ # Protected Pages
+│       │   │       ├── dashboard/
+│       │   │       ├── wallets/
+│       │   │       ├── categories/
+│       │   │       ├── transactions/
+│       │   │       └── profile/
+│       │   ├── lib/            # Axios Config
+│       │   ├── services/       # API Services
+│       │   ├── types/          # TypeScript Types
+│       │   └── providers/      # React Query Provider
+│       └── .env.local
 │
-└── README.md
+├── README.md                   # This file
+├── API_DOCS.md                 # API Documentation
+└── ARCHITECTURE.md             # Technical Architecture
 ```
 
 ---
 
-## 🛠️ Yêu cầu hệ thống
+## 🚀 Getting Started
 
-- **Node.js**: v20+ (sử dụng `nvm use 20`)
-- **PostgreSQL**: v14+
-- **npm**: v10+
+### Prerequisites
+- Node.js 20+ (recommended)
+- PostgreSQL 14+
+- npm or yarn
 
----
-
-## 🚀 Hướng dẫn cài đặt
-
-### 1. Cài đặt PostgreSQL (nếu chưa có)
-
+### 1. Clone Repository
 ```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-
-# Start PostgreSQL
-sudo systemctl start postgresql
-
-# Tạo database
-sudo -u postgres psql -c "CREATE DATABASE fintrack;"
-sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'password';"
+git clone <repository-url>
+cd fintrack
 ```
 
-### 2. Cấu hình Backend
+### 2. Setup Backend (API)
 
 ```bash
 cd apps/api
 
-# Copy file môi trường
+# Install dependencies
+npm install
+
+# Setup environment variables
 cp .env.example .env
 
-# Sửa DATABASE_URL trong .env nếu cần
+# Edit .env file with your database credentials
+# DATABASE_URL="postgresql://user:password@localhost:5432/fintrack"
+# JWT_SECRET="your-secret-key"
+# JWT_REFRESH_SECRET="your-refresh-secret"
 
 # Generate Prisma Client
 npx prisma generate
 
-# Chạy migration
-npx prisma migrate dev --name init
+# Run database migrations
+npx prisma migrate dev
 
-# Khởi chạy server
+# (Optional) Seed database with default categories
+npx prisma db seed
+
+# Start development server
 npm run start:dev
 ```
 
-**API sẽ chạy tại:** http://localhost:3000/api
+Backend will run on: `http://localhost:3000`
 
-### 3. Cấu hình Frontend
+### 3. Setup Frontend (Web)
 
 ```bash
 cd apps/web
 
-# Tạo file .env.local
-echo 'NEXT_PUBLIC_API_URL=http://localhost:3000/api' > .env.local
+# Install dependencies
+npm install
 
-# Khởi chạy
+# Setup environment variables
+cp .env.local.example .env.local
+
+# Edit .env.local
+# NEXT_PUBLIC_API_URL=http://localhost:3000/api
+
+# Start development server
 npm run dev
 ```
 
-**Frontend sẽ chạy tại:** http://localhost:3001
+Frontend will run on: `http://localhost:3001`
+
+### 4. Access Application
+
+Open your browser and navigate to:
+- **Frontend**: http://localhost:3001
+- **Backend API**: http://localhost:3000/api
+- **API Docs**: See `API_DOCS.md`
 
 ---
 
-## 📅 LỘ TRÌNH ÔN TẬP 7 NGÀY
+## 📖 Usage
 
-### Ngày 1: Authentication & Project Setup ✅
+### 1. Register an Account
+- Navigate to `/register`
+- Enter your email, password, first name, and last name
+- Click "Register"
 
-- [x] Setup NestJS với TypeScript
-- [x] Cấu hình Prisma với PostgreSQL
-- [x] Thiết kế Database Schema (User, Wallet, Category, Transaction)
-- [x] Triển khai JWT Authentication (Access + Refresh Token)
-- [x] Viết Guards và Decorators cho RBAC
-- [x] Setup Next.js với App Router
-- [x] Tạo trang Login/Register
-- [x] Cấu hình Middleware bảo vệ routes
+### 2. Login
+- Navigate to `/login`
+- Enter your email and password
+- Click "Login"
 
-**🎯 BÀI TẬP CHO BẠN:**
+### 3. Create Wallets
+- Go to "Wallets" page
+- Click "Create New Wallet"
+- Enter wallet name, initial balance, and currency
+- Save
 
-1. Hoàn thiện kết nối Login/Register form với API
-2. Lưu token vào Cookie (HttpOnly nếu có thể)
-3. Tạo Auth Context để quản lý trạng thái đăng nhập
+### 4. Create Categories
+- Go to "Categories" page
+- Click "Create New Category"
+- Choose type (Income/Expense), name, icon, and color
+- Save
 
----
+### 5. Add Transactions
+- Go to "Transactions" page
+- Click "Create New Transaction"
+- Select type, wallet, category, amount, date, and description
+- Save (wallet balance updates automatically)
 
-### Ngày 2: Wallet & Category Management
+### 6. View Dashboard
+- Go to "Dashboard" page
+- View summary statistics, charts, and recent transactions
 
-- [ ] API CRUD cho Wallet (Ví tiền)
-- [ ] API CRUD cho Category (Danh mục)
-- [ ] Validation với class-validator
-- [ ] Frontend: Form tạo Wallet/Category
-- [ ] Sử dụng React Hook Form + Zod
-
-**🎯 Kiến thức cần ôn:**
-
-- NestJS: DTOs, Pipes, Exception Filters
-- React: Controlled Forms, Form Validation
-
----
-
-### Ngày 3: Transaction Management
-
-- [ ] API CRUD cho Transaction
-- [ ] Tự động cập nhật số dư Wallet
-- [ ] Database Transaction (ACID)
-- [ ] Frontend: Form thêm giao dịch
-- [ ] Hiển thị danh sách giao dịch
-
-**🎯 Kiến thức cần ôn:**
-
-- Prisma: Transactions, Relations
-- TypeScript: Generics
+### 7. Manage Profile
+- Go to "Profile" page
+- Update your name and avatar
+- Change password if needed
 
 ---
 
-### Ngày 4: Advanced Queries & Pagination
+## 🔑 Key Features Explained
 
-- [ ] API: Pagination, Search, Filter, Sort
-- [ ] Thống kê theo tháng/năm (Aggregation)
-- [ ] Frontend: Data Table với filter
-- [ ] React Query cho data fetching & caching
+### Automatic Balance Management
+When you create, update, or delete a transaction:
+- **Income**: Adds to wallet balance
+- **Expense**: Subtracts from wallet balance
+- **Update**: Reverts old change + applies new change
+- **Delete**: Reverts the balance change
 
-**🎯 Kiến thức cần ôn:**
+### React Query Integration
+- Automatic caching and refetching
+- Optimistic UI updates
+- Background data synchronization
+- Minimal API calls
 
-- SQL: GROUP BY, Aggregate Functions
-- React Query: useQuery, useMutation, Cache
-
----
-
-### Ngày 5: Dashboard & Charts
-
-- [ ] API thống kê tổng quan
-- [ ] Frontend: Dashboard với biểu đồ
-- [ ] Sử dụng Recharts hoặc Chart.js
-- [ ] Responsive design
-
-**🎯 Kiến thức cần ôn:**
-
-- Data Visualization
-- React: useMemo, useCallback (optimization)
+### JWT Authentication Flow
+1. User logs in → Receives Access Token + Refresh Token
+2. Access Token stored in localStorage (will migrate to HttpOnly cookies)
+3. Axios interceptor attaches token to every request
+4. On 401 error → Auto-refresh using Refresh Token
+5. On refresh fail → Logout and redirect to login
 
 ---
 
-### Ngày 6: Real-time & Advanced Features
+## 🧪 Testing
 
-- [ ] Socket.io cho real-time updates
-- [ ] Export data ra Excel/PDF
-- [ ] File upload (Avatar)
-- [ ] Rate Limiting, Security headers
+### Backend Tests
+```bash
+cd apps/api
+npm run test
+npm run test:e2e
+```
 
-**🎯 Kiến thức cần ôn:**
-
-- WebSocket
-- Node.js Streams
-- Security best practices
-
----
-
-### Ngày 7: Testing & Deployment
-
-- [ ] Unit tests với Jest
-- [ ] E2E tests
-- [ ] Dockerize ứng dụng
-- [ ] CI/CD với GitHub Actions
-
-**🎯 Kiến thức cần ôn:**
-
-- Testing: Unit, Integration, E2E
-- Docker, Docker Compose
-- DevOps basics
+### Frontend Tests
+```bash
+cd apps/web
+npm run test
+```
 
 ---
 
-## 🔑 API Endpoints
+## 🚢 Deployment
 
-### Auth
+### Backend Deployment (Railway, Render, etc.)
+1. Set environment variables
+2. Run `npm run build`
+3. Run `npm run start:prod`
 
-| Method | Endpoint             | Description   |
-| ------ | -------------------- | ------------- |
-| POST   | `/api/auth/register` | Đăng ký       |
-| POST   | `/api/auth/login`    | Đăng nhập     |
-| POST   | `/api/auth/logout`   | Đăng xuất     |
-| POST   | `/api/auth/refresh`  | Làm mới token |
-
-### Wallets (TODO)
-
-| Method | Endpoint           | Description  |
-| ------ | ------------------ | ------------ |
-| GET    | `/api/wallets`     | Danh sách ví |
-| POST   | `/api/wallets`     | Tạo ví mới   |
-| PATCH  | `/api/wallets/:id` | Cập nhật ví  |
-| DELETE | `/api/wallets/:id` | Xóa ví       |
-
-### Transactions (TODO)
-
-| Method | Endpoint                  | Description         |
-| ------ | ------------------------- | ------------------- |
-| GET    | `/api/transactions`       | Danh sách giao dịch |
-| POST   | `/api/transactions`       | Tạo giao dịch       |
-| GET    | `/api/transactions/stats` | Thống kê            |
+### Frontend Deployment (Vercel, Netlify, etc.)
+1. Set `NEXT_PUBLIC_API_URL` to your backend URL
+2. Run `npm run build`
+3. Deploy `/.next` folder
 
 ---
 
-## 📚 Tài liệu tham khảo
+## 📚 Documentation
 
-- [NestJS Documentation](https://docs.nestjs.com/)
-- [Prisma Documentation](https://www.prisma.io/docs/)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [React Query (TanStack Query)](https://tanstack.com/query/latest)
-- [Tailwind CSS](https://tailwindcss.com/docs)
+- **API Documentation**: See [API_DOCS.md](./API_DOCS.md)
+- **Architecture Details**: See [ARCHITECTURE.md](./ARCHITECTURE.md)
+- **Database Schema**: See `apps/api/prisma/schema.prisma`
 
 ---
 
-## 💡 Tips
+## 🎯 Roadmap
 
-1. **Đọc code trước khi code:** Hiểu cấu trúc hiện tại trước khi thêm tính năng mới.
-2. **Commit thường xuyên:** Mỗi khi hoàn thành một tính năng nhỏ.
-3. **Sử dụng Cursor AI:** Hỏi `@Codebase` để hiểu code hoặc nhờ review.
-4. **Console.log là bạn:** Debug bằng log trước khi dùng debugger.
+### Completed ✅
+- [x] Authentication (Register, Login, JWT)
+- [x] Wallets CRUD
+- [x] Categories CRUD
+- [x] Transactions CRUD with Balance Logic
+- [x] Dashboard with Charts
+- [x] Profile & Settings
+- [x] Responsive UI
+
+### Future Enhancements 🚀
+- [ ] Dark Mode
+- [ ] Budget Management
+- [ ] Recurring Transactions
+- [ ] Multi-currency Exchange Rates
+- [ ] Import/Export CSV
+- [ ] Advanced Filters & Search
+- [ ] Email Notifications
+- [ ] Mobile App (React Native)
+- [ ] Multi-user Shared Wallets
 
 ---
 
-**Happy Coding! 🎉**
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👨‍💻 Author
+
+**Nguyen Ngoc Hai**
+- GitHub: [@ngochai2909](https://github.com/ngochai2909)
+
+---
+
+## 🙏 Acknowledgments
+
+- NestJS Team for the amazing framework
+- Next.js Team for the powerful React framework
+- Prisma Team for the excellent ORM
+- TanStack Team for React Query
+- Recharts Team for the charting library
+
+---
+
+## 📞 Support
+
+If you have any questions or issues, please:
+1. Check the documentation
+2. Search existing issues
+3. Create a new issue with detailed information
+
+---
+
+**Happy Tracking! 💰📊**
