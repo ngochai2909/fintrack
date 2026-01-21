@@ -1,85 +1,76 @@
-import axiosInstance from '@/lib/axios';
-import { Category, CreateCategoryDto, UpdateCategoryDto } from '@/types/category';
+// ════════════════════════════════════════════════════════════
+// CATEGORIES SERVICE
+// ════════════════════════════════════════════════════════════
+// Service layer for Categories API calls
+// Uses axiosInstance (auto token attachment & refresh)
+// ════════════════════════════════════════════════════════════
+
+import { axiosInstance } from '@/lib/axios';
+import {
+  Category,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from '@/types/category';
 
 /**
- * CategoriesService - API calls for Categories
+ * Categories Service
+ * Handles all API calls related to categories
  * 
- * PATTERN: Similar to wallets.service.ts
- * 
- * ALL METHODS USE axiosInstance (auto-unwraps response.data)
- * 
- * ENDPOINTS:
- * - POST   /categories          → Create category
- * - GET    /categories          → Get all categories
- * - GET    /categories/:id      → Get single category
- * - PATCH  /categories/:id      → Update category
- * - DELETE /categories/:id      → Delete category
- * 
- * TODO: Implement all methods
+ * API Endpoints:
+ * - GET    /api/categories          - Get all categories (user's + system defaults)
+ * - POST   /api/categories          - Create new category
+ * - GET    /api/categories/:id      - Get category by ID
+ * - PATCH  /api/categories/:id      - Update category
+ * - DELETE /api/categories/:id      - Delete category
  */
 class CategoriesService {
-  private readonly baseURL = '/categories';
+  private readonly baseUrl = '/categories';
 
   /**
-   * GET ALL CATEGORIES
-   * Returns: User's categories + System default categories
-   * 
-   * TODO: Implement this method
+   * Get all categories (user's + system defaults)
+   * @returns Array of categories, ordered by type and name
    */
   async getAll(): Promise<Category[]> {
-    // TODO: Call GET /categories
-    // Use: axiosInstance.get<Category[]>(this.baseURL)
-    // Return: Promise<Category[]>
-    throw new Error('Not implemented');
+    return axiosInstance.get(this.baseUrl);
   }
 
   /**
-   * GET CATEGORY BY ID
-   * 
-   * TODO: Implement this method
+   * Get category by ID
+   * @param id - Category UUID
+   * @returns Category object
    */
   async getById(id: string): Promise<Category> {
-    // TODO: Call GET /categories/:id
-    // Use: axiosInstance.get<Category>(`${this.baseURL}/${id}`)
-    // Return: Promise<Category>
-    throw new Error('Not implemented');
+    return axiosInstance.get(`${this.baseUrl}/${id}`);
   }
 
   /**
-   * CREATE CATEGORY
-   * 
-   * TODO: Implement this method
+   * Create a new category
+   * @param data - Category data (name, type, icon, color)
+   * @returns Created category
    */
   async create(data: CreateCategoryDto): Promise<Category> {
-    // TODO: Call POST /categories
-    // Use: axiosInstance.post<Category>(this.baseURL, data)
-    // Return: Promise<Category>
-    throw new Error('Not implemented');
+    return axiosInstance.post(this.baseUrl, data);
   }
 
   /**
-   * UPDATE CATEGORY
-   * 
-   * TODO: Implement this method
+   * Update an existing category
+   * @param id - Category UUID
+   * @param data - Updated category data
+   * @returns Updated category
    */
   async update(id: string, data: UpdateCategoryDto): Promise<Category> {
-    // TODO: Call PATCH /categories/:id
-    // Use: axiosInstance.patch<Category>(`${this.baseURL}/${id}`, data)
-    // Return: Promise<Category>
-    throw new Error('Not implemented');
+    return axiosInstance.patch(`${this.baseUrl}/${id}`, data);
   }
 
   /**
-   * DELETE CATEGORY
-   * 
-   * TODO: Implement this method
+   * Delete a category
+   * @param id - Category UUID
+   * @returns Void (no content)
    */
   async delete(id: string): Promise<void> {
-    // TODO: Call DELETE /categories/:id
-    // Use: axiosInstance.delete(`${this.baseURL}/${id}`)
-    // Return: Promise<void>
-    throw new Error('Not implemented');
+    return axiosInstance.delete(`${this.baseUrl}/${id}`);
   }
 }
 
+// Export singleton instance
 export const categoriesService = new CategoriesService();

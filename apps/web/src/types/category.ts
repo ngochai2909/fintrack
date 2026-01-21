@@ -1,56 +1,54 @@
-/**
- * Category Types & Interfaces
- * 
- * PATTERN: Similar to wallet.ts
- * 
- * TODO: Define types matching the Prisma Category model
- */
+// ════════════════════════════════════════════════════════════
+// CATEGORY TYPES
+// ════════════════════════════════════════════════════════════
+// Types for Categories module - Frontend
+// Matching Backend DTOs and Prisma schema
+// ════════════════════════════════════════════════════════════
 
 /**
  * Transaction Type Enum
- * Must match Prisma's TransactionType enum
+ * Must match Prisma schema TransactionType enum
  */
-export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
+export enum TransactionType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
+  TRANSFER = 'TRANSFER',
+}
 
 /**
- * Category Interface
- * Must match the Category model from Prisma schema
- * 
- * TODO: Define all fields
+ * Category Entity - Response from API
+ * Represents a transaction category (income/expense/transfer)
  */
 export interface Category {
   id: string;
   name: string;
   type: TransactionType;
-  icon?: string;
-  color?: string;
+  icon: string | null;
+  color: string | null;
   isDefault: boolean;
-  userId?: string | null; // null for system default categories
+  userId: string | null; // null for system default categories
   createdAt: string;
   updatedAt: string;
 }
 
 /**
- * DTO for creating a category
- * 
- * TODO: Define required and optional fields
+ * DTO for creating a new category
+ * Matches CreateCategoryDto in Backend
  */
 export interface CreateCategoryDto {
   name: string;
-  type: TransactionType;
+  type: TransactionType | string; // Allow string for form compatibility
   icon?: string;
   color?: string;
 }
 
 /**
  * DTO for updating a category
- * All fields are optional (partial update)
- * 
- * TODO: Define optional fields
+ * Matches UpdateCategoryDto in Backend
  */
 export interface UpdateCategoryDto {
   name?: string;
-  type?: TransactionType;
+  type?: TransactionType | string; // Allow string for form compatibility
   icon?: string;
   color?: string;
 }
