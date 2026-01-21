@@ -46,7 +46,8 @@ export default function DashboardLayout({
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: '📊' },
     { href: '/wallets', label: 'Ví', icon: '💰' },
-    { href: '/categories', label: 'Danh mục', icon: '📁' }
+    { href: '/categories', label: 'Danh mục', icon: '📁' },
+    { href: '/transactions', label: 'Giao dịch', icon: '💳' }
   ]
 
   return (
