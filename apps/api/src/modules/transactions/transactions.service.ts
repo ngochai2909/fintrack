@@ -10,7 +10,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionType } from '@prisma/client';
@@ -86,7 +86,7 @@ export class TransactionsService {
 
     // Use transaction (database transaction, not our Transaction model)
     // to ensure atomicity: both transaction creation and wallet update must succeed
-    const result = await this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma: any) => {
       // Create transaction
       const transaction = await prisma.transaction.create({
         data: {
@@ -319,7 +319,7 @@ export class TransactionsService {
     }
 
     // Use database transaction for atomicity
-    const result = await this.prisma.$transaction(async (prisma) => {
+    const result = await this.prisma.$transaction(async (prisma: any) => {
       // STEP 1: Revert old wallet balance
       await prisma.wallet.update({
         where: { id: oldTransaction.walletId },
@@ -401,7 +401,7 @@ export class TransactionsService {
     );
 
     // Use database transaction
-    await this.prisma.$transaction(async (prisma) => {
+    await this.prisma.$transaction(async (prisma: any) => {
       // Revert wallet balance
       await prisma.wallet.update({
         where: { id: transaction.walletId },

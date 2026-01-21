@@ -5,7 +5,7 @@
 // ════════════════════════════════════════════════════════════
 
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { TransactionType } from '@prisma/client';
 
 @Injectable()
@@ -185,7 +185,7 @@ export class DashboardService {
     });
 
     // Get category details
-    const categoryIds = transactions.map((t) => t.categoryId);
+    const categoryIds = transactions.map((t: any) => t.categoryId);
     const categories = await this.prisma.category.findMany({
       where: { id: { in: categoryIds } },
       select: {
@@ -197,8 +197,8 @@ export class DashboardService {
     });
 
     // Map category details to transactions
-    return transactions.map((t) => {
-      const category = categories.find((c) => c.id === t.categoryId);
+    return transactions.map((t: any) => {
+      const category = categories.find((c: any) => c.id === t.categoryId);
       return {
         categoryId: t.categoryId,
         categoryName: category?.name || 'Unknown',
