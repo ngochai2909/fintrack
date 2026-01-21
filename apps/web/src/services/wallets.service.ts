@@ -5,7 +5,7 @@
 // Tương tự như Controller trong Backend
 // ════════════════════════════════════════════════════════════
 
-import axiosInstance from '@/lib/axios'
+import { axiosInstance } from '@/lib/axios'
 import { Wallet, CreateWalletDto, UpdateWalletDto } from '@/types/wallet'
 
 // ────────────────────────────────────────────────────────────

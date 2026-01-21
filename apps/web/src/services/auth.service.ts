@@ -4,7 +4,7 @@
 // 📌 SECURITY NOTE: Using localStorage (Phase 3 will migrate to HttpOnly Cookie)
 // ════════════════════════════════════════════════════════════
 
-import axiosInstance from '@/lib/axios'
+import { axiosInstance } from '@/lib/axios'
 
 // ────────────────────────────────────────────────────────────
 // Types
