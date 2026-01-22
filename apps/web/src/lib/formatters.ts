@@ -13,10 +13,22 @@
  * formatCompactNumber(1500000000) => "1.5B"
  */
 export function formatCompactNumber(value: number): string {
+  // Handle special cases
+  if (isNaN(value)) return '0';
+  if (!isFinite(value)) return value > 0 ? '∞' : '-∞';
   if (value === 0) return '0';
   
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
+  
+  // Handle extremely large numbers (scientific notation)
+  if (abs >= 1e15) {
+    return sign + '∞';
+  }
+  
+  if (abs >= 1_000_000_000_000) {
+    return sign + (abs / 1_000_000_000_000).toFixed(1).replace(/\.0$/, '') + 'T';
+  }
   
   if (abs >= 1_000_000_000) {
     return sign + (abs / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
@@ -30,7 +42,7 @@ export function formatCompactNumber(value: number): string {
     return sign + (abs / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
   }
   
-  return sign + abs.toString();
+  return sign + abs.toFixed(0);
 }
 
 /**
@@ -55,10 +67,19 @@ export function formatCurrency(
   } = options || {};
   
   // Convert to number if string
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  let numValue: number;
+  if (typeof value === 'string') {
+    numValue = parseFloat(value);
+  } else {
+    numValue = value;
+  }
   
   // Handle invalid numbers
-  if (isNaN(numValue)) return '0';
+  if (isNaN(numValue)) return showSymbol ? '0 ₫' : '0';
+  if (!isFinite(numValue)) {
+    const symbol = numValue > 0 ? '∞' : '-∞';
+    return showSymbol ? `${symbol} ₫` : symbol;
+  }
   
   // Compact format
   if (compact) {
@@ -67,7 +88,7 @@ export function formatCurrency(
   }
   
   // Full format with thousand separators
-  const formatted = new Intl.NumberFormat('vi-VN').format(numValue);
+  const formatted = new Intl.NumberFormat('vi-VN').format(Math.round(numValue));
   
   if (!showSymbol) return formatted;
   
@@ -84,14 +105,23 @@ export function formatCurrency(
  * formatCardAmount(150000000) => "150M ₫"
  */
 export function formatCardAmount(value: number | string): string {
-  const numValue = typeof value === 'string' ? parseFloat(value) : value;
+  let numValue: number;
+  if (typeof value === 'string') {
+    numValue = parseFloat(value);
+  } else {
+    numValue = value;
+  }
   
+  // Handle invalid numbers
   if (isNaN(numValue)) return '0 ₫';
+  if (!isFinite(numValue)) {
+    return numValue > 0 ? '∞ ₫' : '-∞ ₫';
+  }
   
   const abs = Math.abs(numValue);
   
-  // Nếu > 1 triệu thì dùng compact
-  if (abs >= 1_000_000) {
+  // Nếu > 100K thì dùng compact
+  if (abs >= 100_000) {
     return formatCurrency(numValue, { compact: true });
   }
   
