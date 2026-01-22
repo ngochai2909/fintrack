@@ -9,6 +9,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { walletsService } from '@/services/wallets.service'
 import Link from 'next/link'
+import { formatCardAmount } from '@/lib/formatters'
 
 export default function WalletsPage() {
   const queryClient = useQueryClient()
@@ -154,7 +155,7 @@ export default function WalletsPage() {
 
               {/* Balance */}
               <p className='text-3xl font-bold text-blue-600 mb-4'>
-                {wallet.balance.toLocaleString('vi-VN')} {wallet.currency}
+                {formatCardAmount(wallet.balance)}
               </p>
 
               {/* Metadata */}

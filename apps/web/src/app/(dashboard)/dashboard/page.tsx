@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboard.service';
 import Link from 'next/link';
 import { TransactionType } from '@/types/category';
+import { formatCardAmount, formatShortDate } from '@/lib/formatters';
 import {
   LineChart,
   Line,
@@ -380,7 +381,7 @@ function SummaryCard({
       </div>
       <p className="text-2xl font-bold">
         {prefix}
-        {isCurrency ? formatCurrency(value) : value.toLocaleString('vi-VN')}
+        {isCurrency ? formatCardAmount(value) : value.toLocaleString('vi-VN')}
       </p>
     </div>
   );
@@ -434,12 +435,7 @@ const CHART_COLORS = [
   '#14B8A6', // teal
 ];
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-  }).format(amount);
-}
+// Removed - now using formatCardAmount from @/lib/formatters
 
 function formatDateShort(dateString: string): string {
   const date = new Date(dateString);

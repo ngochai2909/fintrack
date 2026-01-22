@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Transaction } from '@/types/transaction';
 import { TransactionType } from '@/types/category';
 import { useState } from 'react';
+import { formatCardAmount, formatCurrency, formatShortDate } from '@/lib/formatters';
 
 /**
  * TRANSACTIONS LIST PAGE
@@ -304,7 +305,7 @@ function SummaryCard({
         <span className="text-sm font-medium text-gray-600">{title}</span>
       </div>
       <p className={`text-2xl font-bold ${textColorClasses[color]}`}>
-        {formatAmount(amount, 'VND')}
+        {formatCardAmount(amount)}
       </p>
     </div>
   );
@@ -464,13 +465,10 @@ function calculateTotals(transactions: Transaction[]) {
 }
 
 /**
- * Format amount with currency
+ * Format amount with currency (use new formatter utility)
  */
-function formatAmount(amount: number, currency: string): string {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: currency === 'VND' ? 'VND' : 'USD',
-  }).format(amount);
+function formatAmount(amount: number, _currency: string): string {
+  return formatCurrency(amount, { compact: false });
 }
 
 /**
