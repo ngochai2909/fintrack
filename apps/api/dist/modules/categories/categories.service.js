@@ -92,6 +92,12 @@ let CategoriesService = class CategoriesService {
         if (category.userId === null) {
             throw new common_1.ForbiddenException('Cannot delete default category');
         }
+        const transactionCount = await this.prisma.transaction.count({
+            where: { categoryId },
+        });
+        if (transactionCount > 0) {
+            throw new common_1.ConflictException(`Cannot delete category. It is being used by ${transactionCount} transaction(s). Please reassign or delete those transactions first.`);
+        }
         await this.prisma.category.delete({
             where: {
                 id: categoryId,

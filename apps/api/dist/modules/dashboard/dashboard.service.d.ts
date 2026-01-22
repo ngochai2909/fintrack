@@ -29,12 +29,12 @@ export declare class DashboardService {
             updatedAt: Date;
             type: import(".prisma/client").$Enums.TransactionType;
             userId: string;
+            categoryId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
             description: string | null;
             note: string | null;
             date: Date;
             walletId: string;
-            categoryId: string;
         })[];
         charts: {
             incomeByCategory: {

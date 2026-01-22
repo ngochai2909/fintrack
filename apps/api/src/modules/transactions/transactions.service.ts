@@ -13,8 +13,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
-import { TransactionType } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { TransactionType, Prisma } from '@prisma/client';
 
 @Injectable()
 export class TransactionsService {
@@ -22,7 +21,7 @@ export class TransactionsService {
 
   /**
    * CREATE TRANSACTION
-   * 
+   *
    * Steps:
    * 1. Validate wallet and category exist and belong to user
    * 2. Create transaction
@@ -30,7 +29,7 @@ export class TransactionsService {
    *    - INCOME: add to balance
    *    - EXPENSE: subtract from balance
    *    - TRANSFER: (not implemented yet, requires 2 wallets)
-   * 
+   *
    * @param userId - Current user ID
    * @param dto - Transaction data
    * @returns Created transaction with relations
@@ -45,9 +44,7 @@ export class TransactionsService {
     });
 
     if (!wallet) {
-      throw new NotFoundException(
-        'Wallet not found or does not belong to you',
-      );
+      throw new NotFoundException('Wallet not found or does not belong to you');
     }
 
     // Validate category exists (either user's or system default)
@@ -86,62 +83,64 @@ export class TransactionsService {
 
     // Use transaction (database transaction, not our Transaction model)
     // to ensure atomicity: both transaction creation and wallet update must succeed
-    const result = await this.prisma.$transaction(async (prisma: any) => {
-      // Create transaction
-      const transaction = await prisma.transaction.create({
-        data: {
-          amount: dto.amount,
-          type: dto.type,
-          description: dto.description,
-          note: dto.note,
-          date: dto.date ? new Date(dto.date) : new Date(),
-          walletId: dto.walletId,
-          categoryId: dto.categoryId,
-          userId,
-        },
-        include: {
-          wallet: {
-            select: {
-              id: true,
-              name: true,
-              balance: true,
-              currency: true,
+    const result = await this.prisma.$transaction(
+      async (prisma: Prisma.TransactionClient) => {
+        // Create transaction
+        const transaction = await prisma.transaction.create({
+          data: {
+            amount: dto.amount,
+            type: dto.type,
+            description: dto.description,
+            note: dto.note,
+            date: dto.date ? new Date(dto.date) : new Date(),
+            walletId: dto.walletId,
+            categoryId: dto.categoryId,
+            userId,
+          },
+          include: {
+            wallet: {
+              select: {
+                id: true,
+                name: true,
+                balance: true,
+                currency: true,
+              },
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                icon: true,
+                color: true,
+              },
             },
           },
-          category: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              icon: true,
-              color: true,
+        });
+
+        // Update wallet balance
+        await prisma.wallet.update({
+          where: { id: dto.walletId },
+          data: {
+            balance: {
+              increment: balanceChange,
             },
           },
-        },
-      });
+        });
 
-      // Update wallet balance
-      await prisma.wallet.update({
-        where: { id: dto.walletId },
-        data: {
-          balance: {
-            increment: balanceChange,
-          },
-        },
-      });
-
-      return transaction;
-    });
+        return transaction;
+      },
+    );
 
     return result;
   }
 
   /**
    * GET ALL TRANSACTIONS
-   * 
+   *
    * Returns all transactions for the current user
    * Ordered by date (newest first)
-   * 
+   *
    * @param userId - Current user ID
    * @returns Array of transactions with relations
    */
@@ -173,7 +172,7 @@ export class TransactionsService {
 
   /**
    * GET TRANSACTION BY ID
-   * 
+   *
    * @param userId - Current user ID
    * @param transactionId - Transaction ID
    * @returns Transaction with relations
@@ -219,14 +218,14 @@ export class TransactionsService {
 
   /**
    * UPDATE TRANSACTION
-   * 
+   *
    * Complex logic:
    * 1. Get old transaction
    * 2. Revert old wallet balance change
    * 3. If wallet changed, revert old wallet and apply to new wallet
    * 4. Update transaction
    * 5. Apply new wallet balance change
-   * 
+   *
    * @param userId - Current user ID
    * @param transactionId - Transaction ID
    * @param dto - Updated transaction data
@@ -281,7 +280,8 @@ export class TransactionsService {
     }
 
     // Determine final values (use new value if provided, else keep old)
-    const finalAmount = dto.amount ?? parseFloat(oldTransaction.amount.toString());
+    const finalAmount =
+      dto.amount ?? parseFloat(oldTransaction.amount.toString());
     const finalType = dto.type ?? oldTransaction.type;
     const finalWalletId = dto.walletId ?? oldTransaction.walletId;
 
@@ -290,7 +290,10 @@ export class TransactionsService {
       oldTransaction.type,
       parseFloat(oldTransaction.amount.toString()),
     );
-    const newBalanceChange = this.calculateBalanceChange(finalType, finalAmount);
+    const newBalanceChange = this.calculateBalanceChange(
+      finalType,
+      finalAmount,
+    );
 
     // Check if wallet has enough balance for the update
     if (finalType === TransactionType.EXPENSE) {
@@ -301,12 +304,12 @@ export class TransactionsService {
       if (currentWallet) {
         // Calculate what the balance would be after reverting old and applying new
         let projectedBalance = parseFloat(currentWallet.balance.toString());
-        
+
         // If same wallet, revert old change first
         if (finalWalletId === oldTransaction.walletId) {
           projectedBalance -= oldBalanceChange;
         }
-        
+
         // Then apply new change
         projectedBalance += newBalanceChange;
 
@@ -319,74 +322,76 @@ export class TransactionsService {
     }
 
     // Use database transaction for atomicity
-    const result = await this.prisma.$transaction(async (prisma: any) => {
-      // STEP 1: Revert old wallet balance
-      await prisma.wallet.update({
-        where: { id: oldTransaction.walletId },
-        data: {
-          balance: {
-            decrement: oldBalanceChange, // Reverse the old change
-          },
-        },
-      });
-
-      // STEP 2: Update transaction
-      const updatedTransaction = await prisma.transaction.update({
-        where: { id: transactionId },
-        data: {
-          amount: finalAmount,
-          type: finalType,
-          description: dto.description,
-          note: dto.note,
-          date: dto.date ? new Date(dto.date) : undefined,
-          walletId: finalWalletId,
-          categoryId: dto.categoryId,
-        },
-        include: {
-          wallet: {
-            select: {
-              id: true,
-              name: true,
-              balance: true,
-              currency: true,
+    const result = await this.prisma.$transaction(
+      async (prisma: Prisma.TransactionClient) => {
+        // STEP 1: Revert old wallet balance
+        await prisma.wallet.update({
+          where: { id: oldTransaction.walletId },
+          data: {
+            balance: {
+              decrement: oldBalanceChange, // Reverse the old change
             },
           },
-          category: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              icon: true,
-              color: true,
+        });
+
+        // STEP 2: Update transaction
+        const updatedTransaction = await prisma.transaction.update({
+          where: { id: transactionId },
+          data: {
+            amount: finalAmount,
+            type: finalType,
+            description: dto.description,
+            note: dto.note,
+            date: dto.date ? new Date(dto.date) : undefined,
+            walletId: finalWalletId,
+            categoryId: dto.categoryId,
+          },
+          include: {
+            wallet: {
+              select: {
+                id: true,
+                name: true,
+                balance: true,
+                currency: true,
+              },
+            },
+            category: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                icon: true,
+                color: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      // STEP 3: Apply new wallet balance
-      await prisma.wallet.update({
-        where: { id: finalWalletId },
-        data: {
-          balance: {
-            increment: newBalanceChange,
+        // STEP 3: Apply new wallet balance
+        await prisma.wallet.update({
+          where: { id: finalWalletId },
+          data: {
+            balance: {
+              increment: newBalanceChange,
+            },
           },
-        },
-      });
+        });
 
-      return updatedTransaction;
-    });
+        return updatedTransaction;
+      },
+    );
 
     return result;
   }
 
   /**
    * DELETE TRANSACTION
-   * 
+   *
    * Steps:
    * 1. Get transaction
    * 2. Revert wallet balance change
    * 3. Delete transaction
-   * 
+   *
    * @param userId - Current user ID
    * @param transactionId - Transaction ID
    */
@@ -401,7 +406,7 @@ export class TransactionsService {
     );
 
     // Use database transaction
-    await this.prisma.$transaction(async (prisma: any) => {
+    await this.prisma.$transaction(async (prisma: Prisma.TransactionClient) => {
       // Revert wallet balance
       await prisma.wallet.update({
         where: { id: transaction.walletId },
@@ -421,7 +426,7 @@ export class TransactionsService {
 
   /**
    * HELPER: Calculate balance change
-   * 
+   *
    * @param type - Transaction type
    * @param amount - Transaction amount
    * @returns Balance change (positive for INCOME, negative for EXPENSE)
@@ -437,9 +442,7 @@ export class TransactionsService {
         return -amount; // Subtract from balance
       case TransactionType.TRANSFER:
         // TODO: Implement TRANSFER logic (requires 2 wallets)
-        throw new BadRequestException(
-          'TRANSFER type is not yet implemented',
-        );
+        throw new BadRequestException('TRANSFER type is not yet implemented');
       default:
         throw new BadRequestException('Invalid transaction type');
     }
