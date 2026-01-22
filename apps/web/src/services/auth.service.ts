@@ -1,14 +1,5 @@
-// ════════════════════════════════════════════════════════════
-// AUTH SERVICE - Authentication APIs
-// ════════════════════════════════════════════════════════════
-// 📌 SECURITY NOTE: Using localStorage (Phase 3 will migrate to HttpOnly Cookie)
-// ════════════════════════════════════════════════════════════
-
 import { axiosInstance } from '@/lib/axios'
 
-// ────────────────────────────────────────────────────────────
-// Types
-// ────────────────────────────────────────────────────────────
 interface RegisterData {
   email: string
   password: string
@@ -35,13 +26,7 @@ interface AuthResponse {
   refreshToken: string
 }
 
-// ────────────────────────────────────────────────────────────
-// Auth Service Object
-// ────────────────────────────────────────────────────────────
 export const authService = {
-  /**
-   * Đăng ký tài khoản mới
-   */
   async register(data: RegisterData): Promise<AuthResponse> {
     return axiosInstance.post<AuthResponse>(
       '/auth/register',
@@ -49,9 +34,6 @@ export const authService = {
     ) as unknown as Promise<AuthResponse>
   },
 
-  /**
-   * Đăng nhập
-   */
   async login(data: LoginData): Promise<AuthResponse> {
     return axiosInstance.post<AuthResponse>(
       '/auth/login',
@@ -59,9 +41,6 @@ export const authService = {
     ) as unknown as Promise<AuthResponse>
   },
 
-  /**
-   * Đăng xuất - Xóa tokens khỏi localStorage
-   */
   logout(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('accessToken')
@@ -69,6 +48,7 @@ export const authService = {
       localStorage.removeItem('user')
     }
   },
+
   getUser(): User | null {
     if (typeof window !== 'undefined') {
       const user = localStorage.getItem('user')
@@ -77,9 +57,6 @@ export const authService = {
     return null
   },
 
-  /**
-   * Lưu tokens sau khi login thành công
-   */
   saveTokens(accessToken: string, refreshToken: string, user: User): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('accessToken', accessToken)
@@ -88,9 +65,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Lấy access token từ localStorage
-   */
   getAccessToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('accessToken')
@@ -98,27 +72,17 @@ export const authService = {
     return null
   },
 
-  /**
-   * Kiểm tra user có đang đăng nhập không
-   */
   isAuthenticated(): boolean {
     return !!this.getAccessToken()
   },
 
-  /**
-   * Lấy thông tin profile của user hiện tại
-   */
   async getProfile(): Promise<any> {
     return axiosInstance.get('/auth/profile')
   },
 
-  /**
-   * Cập nhật thông tin profile
-   */
   async updateProfile(data: { firstName?: string; lastName?: string; avatar?: string }): Promise<any> {
     const updated = await axiosInstance.patch('/auth/profile', data)
     
-    // Update user in localStorage
     if (typeof window !== 'undefined') {
       const currentUser = this.getUser()
       if (currentUser) {
@@ -130,9 +94,6 @@ export const authService = {
     return updated
   },
 
-  /**
-   * Đổi mật khẩu
-   */
   async changePassword(data: { currentPassword: string; newPassword: string }): Promise<any> {
     return axiosInstance.post('/auth/change-password', data)
   }
