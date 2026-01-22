@@ -58,8 +58,11 @@ export class WalletsService {
       },
     });
 
-    // Step 3: Return result
-    return wallet;
+    // Step 3: Return result (convert Decimal to Number)
+    return {
+      ...wallet,
+      balance: Number(wallet.balance),
+    };
   }
 
   // ────────────────────────────────────────────────────────────
@@ -90,7 +93,12 @@ export class WalletsService {
         createdAt: 'desc',
       },
     });
-    return wallets;
+    
+    // Convert Decimal to Number for frontend
+    return wallets.map((w) => ({
+      ...w,
+      balance: Number(w.balance),
+    }));
   }
 
   // ────────────────────────────────────────────────────────────
@@ -124,8 +132,11 @@ export class WalletsService {
       throw new ForbiddenException('You do not own this wallet');
     }
 
-    // Step 4: Return wallet
-    return wallet;
+    // Step 4: Return wallet (convert Decimal to Number)
+    return {
+      ...wallet,
+      balance: Number(wallet.balance),
+    };
   }
 
   // ────────────────────────────────────────────────────────────
@@ -169,8 +180,11 @@ export class WalletsService {
       data: dto, // ← Prisma tự động bỏ qua undefined fields
     });
 
-    // Step 4: Return updated wallet
-    return updatedWallet;
+    // Step 4: Return updated wallet (convert Decimal to Number)
+    return {
+      ...updatedWallet,
+      balance: Number(updatedWallet.balance),
+    };
   }
 
   // ────────────────────────────────────────────────────────────

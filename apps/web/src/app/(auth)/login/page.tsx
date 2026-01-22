@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { authService } from '@/services/auth.service'
 
 export default function LoginPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,6 +22,9 @@ export default function LoginPage() {
     const password = formData.get('password') as string
 
     try {
+      // 🔥 CLEAR OLD CACHE FIRST
+      queryClient.clear()
+
       // Gọi API login
       const data = await authService.login({ email, password })
 

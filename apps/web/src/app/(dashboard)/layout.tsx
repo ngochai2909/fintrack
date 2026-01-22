@@ -5,6 +5,7 @@ import { User } from '@/types/auth'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useLayoutEffect, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function DashboardLayout({
   children
@@ -12,6 +13,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const queryClient = useQueryClient()
 
   // Initialize state from localStorage (lazy initialization)
   const [user] = useState<User | null>(() => {
@@ -38,6 +40,8 @@ export default function DashboardLayout({
   }, [])
 
   const handleLogout = () => {
+    // 🔥 Clear React Query cache before logout
+    queryClient.clear()
     authService.logout()
     window.location.href = '/login'
   }

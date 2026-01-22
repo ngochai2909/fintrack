@@ -52,7 +52,7 @@ export class TransactionsController {
    */
   @Post()
   async createTransaction(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Body() dto: CreateTransactionDto,
   ) {
     return this.transactionsService.createTransaction(userId, dto);
@@ -83,7 +83,7 @@ export class TransactionsController {
    */
   @Get(':id')
   async getTransactionById(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
   ) {
     return this.transactionsService.getTransactionById(userId, id);
@@ -102,7 +102,7 @@ export class TransactionsController {
    */
   @Patch(':id')
   async updateTransaction(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
     @Body() dto: UpdateTransactionDto,
   ) {
@@ -122,7 +122,7 @@ export class TransactionsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteTransaction(
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
     @Param('id') id: string,
   ) {
     await this.transactionsService.deleteTransaction(userId, id);

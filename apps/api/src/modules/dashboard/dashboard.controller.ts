@@ -38,7 +38,7 @@ export class DashboardController {
    * @returns Dashboard summary object
    */
   @Get('summary')
-  async getDashboardSummary(@CurrentUser('sub') userId: string) {
+  async getDashboardSummary(@CurrentUser('id') userId: string) {
     return this.dashboardService.getDashboardSummary(userId);
   }
 }

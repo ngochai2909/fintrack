@@ -135,7 +135,7 @@ export class DashboardService {
    * Get recent transactions with relations
    */
   private async getRecentTransactions(userId: string, limit: number) {
-    return this.prisma.transaction.findMany({
+    const transactions = await this.prisma.transaction.findMany({
       where: { userId },
       take: limit,
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
@@ -158,6 +158,12 @@ export class DashboardService {
         },
       },
     });
+
+    // Convert Decimal to Number for frontend
+    return transactions.map((t) => ({
+      ...t,
+      amount: Number(t.amount),
+    }));
   }
 
   /**

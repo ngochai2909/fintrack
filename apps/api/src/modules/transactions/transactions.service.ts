@@ -132,7 +132,11 @@ export class TransactionsService {
       },
     );
 
-    return result;
+    // 🔥 Convert Decimal to Number for frontend
+    return {
+      ...result,
+      amount: Number(result.amount),
+    };
   }
 
   /**
@@ -145,7 +149,7 @@ export class TransactionsService {
    * @returns Array of transactions with relations
    */
   async getTransactions(userId: string) {
-    return this.prisma.transaction.findMany({
+    const transactions = await this.prisma.transaction.findMany({
       where: { userId },
       include: {
         wallet: {
@@ -168,6 +172,12 @@ export class TransactionsService {
       },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
     });
+
+    // 🔥 Convert Decimal to Number for frontend
+    return transactions.map((t) => ({
+      ...t,
+      amount: Number(t.amount),
+    }));
   }
 
   /**
@@ -213,7 +223,11 @@ export class TransactionsService {
       );
     }
 
-    return transaction;
+    // 🔥 Convert Decimal to Number for frontend
+    return {
+      ...transaction,
+      amount: Number(transaction.amount),
+    };
   }
 
   /**
@@ -381,7 +395,11 @@ export class TransactionsService {
       },
     );
 
-    return result;
+    // 🔥 Convert Decimal to Number for frontend
+    return {
+      ...result,
+      amount: Number(result.amount),
+    };
   }
 
   /**
