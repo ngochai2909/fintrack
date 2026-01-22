@@ -2,6 +2,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 export declare class AuthService {
     private prisma;
     private jwtService;
@@ -39,4 +41,27 @@ export declare class AuthService {
     private hashData;
     private generateTokens;
     private updateRefreshToken;
+    changePassword(userId: string, dto: ChangePasswordDto): Promise<{
+        message: string;
+    }>;
+    updateProfile(userId: string, dto: UpdateProfileDto): Promise<{
+        email: string;
+        firstName: string | null;
+        lastName: string | null;
+        avatar: string | null;
+        id: string;
+        role: import(".prisma/client").$Enums.Role;
+        createdAt: Date;
+    }>;
+    getProfile(userId: string): Promise<{
+        email: string;
+        firstName: string | null;
+        lastName: string | null;
+        avatar: string | null;
+        id: string;
+        role: import(".prisma/client").$Enums.Role;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
 }

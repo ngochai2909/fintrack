@@ -165,6 +165,67 @@ let AuthService = class AuthService {
             data: { refreshToken: hashedRefreshToken },
         });
     }
+    async changePassword(userId, dto) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new common_1.BadRequestException('Current password is incorrect');
+        }
+        if (dto.currentPassword === dto.newPassword) {
+            throw new common_1.BadRequestException('New password must be different from current password');
+        }
+        const hashedPassword = await this.hashData(dto.newPassword);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+        return { message: 'Password changed successfully' };
+    }
+    async updateProfile(userId, dto) {
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                firstName: dto.firstName,
+                lastName: dto.lastName,
+                avatar: dto.avatar,
+            },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                role: true,
+                createdAt: true,
+            },
+        });
+        return updatedUser;
+    }
+    async getProfile(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                role: true,
+                isActive: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+        if (!user) {
+            throw new common_1.NotFoundException('User not found');
+        }
+        return user;
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([

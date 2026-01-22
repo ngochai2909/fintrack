@@ -227,6 +227,17 @@ export class CategoriesService {
       throw new ForbiddenException('Cannot delete default category');
     }
 
+    // 🔥 NEW: Check if category has transactions
+    const transactionCount = await this.prisma.transaction.count({
+      where: { categoryId },
+    });
+
+    if (transactionCount > 0) {
+      throw new ConflictException(
+        `Cannot delete category. It is being used by ${transactionCount} transaction(s). Please reassign or delete those transactions first.`,
+      );
+    }
+
     await this.prisma.category.delete({
       where: {
         id: categoryId,
