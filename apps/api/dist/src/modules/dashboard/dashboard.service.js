@@ -147,40 +147,35 @@ let DashboardService = class DashboardService {
                 },
             },
             select: {
-                date: true,
-                type: true,
+                id: true,
                 amount: true,
+                type: true,
+                date: true,
             },
             orderBy: { date: 'asc' },
         });
     }
     processDailyTrend(transactions) {
         const dailyMap = new Map();
-        const now = new Date();
-        for (let i = 29; i >= 0; i--) {
-            const date = new Date(now);
-            date.setDate(date.getDate() - i);
-            const dateKey = date.toISOString().split('T')[0];
-            dailyMap.set(dateKey, { income: 0, expense: 0 });
-        }
         transactions.forEach((t) => {
-            const dateKey = new Date(t.date).toISOString().split('T')[0];
-            const existing = dailyMap.get(dateKey);
-            if (existing) {
-                const amount = parseFloat(t.amount.toString());
-                if (t.type === client_1.TransactionType.INCOME) {
-                    existing.income += amount;
-                }
-                else if (t.type === client_1.TransactionType.EXPENSE) {
-                    existing.expense += amount;
-                }
+            const dateKey = t.date.toISOString().split('T')[0];
+            const existing = dailyMap.get(dateKey) || { income: 0, expense: 0 };
+            const amount = parseFloat(t.amount.toString());
+            if (t.type === client_1.TransactionType.INCOME) {
+                existing.income += amount;
             }
+            else if (t.type === client_1.TransactionType.EXPENSE) {
+                existing.expense += amount;
+            }
+            dailyMap.set(dateKey, existing);
         });
-        return Array.from(dailyMap.entries()).map(([date, data]) => ({
+        return Array.from(dailyMap.entries())
+            .map(([date, data]) => ({
             date,
             income: data.income,
             expense: data.expense,
-        }));
+        }))
+            .sort((a, b) => a.date.localeCompare(b.date));
     }
 };
 exports.DashboardService = DashboardService;

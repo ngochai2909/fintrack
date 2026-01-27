@@ -20,10 +20,7 @@ let TransactionsService = class TransactionsService {
     }
     async createTransaction(userId, dto) {
         const wallet = await this.prisma.wallet.findFirst({
-            where: {
-                id: dto.walletId,
-                userId,
-            },
+            where: { id: dto.walletId, userId },
         });
         if (!wallet) {
             throw new common_1.NotFoundException('Wallet not found or does not belong to you');

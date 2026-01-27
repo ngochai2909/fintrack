@@ -69,7 +69,7 @@ export class TransactionsController {
    * @returns Array of transactions
    */
   @Get()
-  async getTransactions(@CurrentUser('sub') userId: string) {
+  async getTransactions(@CurrentUser('id') userId: string) {
     return this.transactionsService.getTransactions(userId);
   }
 

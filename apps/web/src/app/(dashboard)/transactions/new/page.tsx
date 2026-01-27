@@ -98,6 +98,18 @@ export default function NewTransactionPage() {
         categoryId: matchingCategories.length > 0 ? matchingCategories[0].id : '',
       }));
     }
+
+    // If category changed, auto-update type to match category type
+    if (name === 'categoryId' && categories) {
+      const selectedCategory = categories.find((c) => c.id === value);
+      if (selectedCategory && selectedCategory.type !== formData.type) {
+        setFormData((prev) => ({
+          ...prev,
+          type: selectedCategory.type,
+          categoryId: value,
+        }));
+      }
+    }
   };
 
   // Handle submit

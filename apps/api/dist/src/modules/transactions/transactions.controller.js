@@ -51,7 +51,7 @@ __decorate([
 ], TransactionsController.prototype, "createTransaction", null);
 __decorate([
     (0, common_1.Get)(),
-    __param(0, (0, decorators_1.CurrentUser)('sub')),
+    __param(0, (0, decorators_1.CurrentUser)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)

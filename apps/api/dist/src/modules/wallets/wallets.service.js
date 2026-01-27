@@ -101,7 +101,9 @@ let WalletsService = class WalletsService {
         await this.prisma.wallet.delete({
             where: { id: walletId },
         });
-        return { message: 'Wallet deleted successfully' };
+        return {
+            message: 'Wallet deleted successfully',
+        };
     }
 };
 exports.WalletsService = WalletsService;

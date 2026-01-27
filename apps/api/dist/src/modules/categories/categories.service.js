@@ -99,12 +99,10 @@ let CategoriesService = class CategoriesService {
             throw new common_1.ConflictException(`Cannot delete category. It is being used by ${transactionCount} transaction(s). Please reassign or delete those transactions first.`);
         }
         await this.prisma.category.delete({
-            where: {
-                id: categoryId,
-            },
+            where: { id: categoryId },
         });
         return {
-            message: 'delete successfully',
+            message: 'Category deleted successfully',
         };
     }
 };
