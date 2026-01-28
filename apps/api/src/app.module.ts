@@ -8,6 +8,7 @@ import { WalletsModule } from './modules/wallets/wallets.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     CategoriesModule,
     TransactionsModule,
     DashboardModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
