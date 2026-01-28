@@ -1,5 +1,6 @@
 """AI Agent using PydanticAI for transaction parsing"""
 import logging
+import os
 from typing import Optional
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
@@ -12,24 +13,15 @@ from app.models.schemas import UserContextData, ParsedTransaction
 logger = logging.getLogger(__name__)
 
 
-# ============================================
-# PydanticAI Output Structure
-# ============================================
-
 class TransactionParseResult(BaseModel):
-    """Structured output from AI - Must match ParsedTransaction schema"""
+    """Structured output from AI"""
     type: str = Field(..., description="Transaction type: INCOME, EXPENSE, or TRANSFER")
     amount: float = Field(..., description="Amount in VND (convert K=1000, tr/triệu=1000000)")
     description: str = Field(..., description="Brief description of transaction")
-    wallet_name: Optional[str] = Field(None, description="Wallet name if mentioned (exact match from context)")
+    wallet_name: Optional[str] = Field(None, description="Wallet name if mentioned")
     category_name: Optional[str] = Field(None, description="Category name inferred from description")
-    note: Optional[str] = Field(None, description="Additional notes extracted")
+    note: Optional[str] = Field(None, description="Additional notes")
     confidence: float = Field(default=0.8, description="Confidence score 0-1")
-
-
-# ============================================
-# System Prompt - Hướng dẫn AI cách parse
-# ============================================
 
 SYSTEM_PROMPT = """Bạn là AI chuyên phân tích giao dịch tài chính tiếng Việt.
 
@@ -61,12 +53,6 @@ QUY TẮC:
    - Match type phù hợp (EXPENSE category cho chi tiêu)
    - Trả về tên trong danh sách hoặc tên mới hợp lý
 
-6. **Độ tin cậy (confidence)**:
-   - 0.9-1.0: Thông tin đầy đủ, rõ ràng
-   - 0.7-0.9: Thiếu ít thông tin nhưng có thể suy luận
-   - 0.5-0.7: Nhiều thông tin mơ hồ
-   - < 0.5: Không thể parse chính xác
-
 VÍ DỤ:
 Input: "Đổ xăng hết 19K, ghi vào ví Hàng ngày"
 Output:
@@ -96,41 +82,39 @@ Hãy phân tích chính xác và trả về JSON theo format TransactionParseRes
 """
 
 
-# ============================================
-# AI Agent Class
-# ============================================
-
 class TransactionParserAgent:
     """AI Agent to parse natural language into structured transactions"""
     
     def __init__(self):
-        """Initialize AI agent with configured model"""
         self.model = self._initialize_model()
         self.agent = self._create_agent()
         logger.info(f"TransactionParserAgent initialized with {settings.AI_MODEL_PROVIDER}/{settings.AI_MODEL_NAME}")
     
     def _initialize_model(self):
-        """Initialize AI model based on configuration"""
         if settings.AI_MODEL_PROVIDER == "gemini":
             if not settings.GEMINI_API_KEY:
                 raise ValueError("GEMINI_API_KEY is required when using Gemini provider")
-            return GeminiModel(
-                settings.AI_MODEL_NAME,
-                api_key=settings.GEMINI_API_KEY
-            )
+            
+            if not os.environ.get("GEMINI_API_KEY"):
+                os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
+            
+            return GeminiModel(settings.AI_MODEL_NAME)
+            
         elif settings.AI_MODEL_PROVIDER == "openrouter":
             if not settings.OPENROUTER_API_KEY:
                 raise ValueError("OPENROUTER_API_KEY is required when using OpenRouter provider")
+            
+            if not os.environ.get("OPENAI_API_KEY"):
+                os.environ["OPENAI_API_KEY"] = settings.OPENROUTER_API_KEY
+            
             return OpenAIModel(
                 settings.AI_MODEL_NAME,
-                base_url="https://openrouter.ai/api/v1",
-                api_key=settings.OPENROUTER_API_KEY
+                base_url="https://openrouter.ai/api/v1"
             )
         else:
             raise ValueError(f"Unsupported AI provider: {settings.AI_MODEL_PROVIDER}")
     
     def _create_agent(self) -> Agent:
-        """Create PydanticAI agent with system prompt"""
         return Agent(
             model=self.model,
             result_type=TransactionParseResult,
@@ -138,7 +122,6 @@ class TransactionParserAgent:
         )
     
     def _build_user_prompt(self, text: str, user_data: Optional[UserContextData]) -> str:
-        """Build user prompt with context"""
         prompt = f"Văn bản cần parse: \"{text}\"\n\n"
         
         if user_data:
@@ -169,32 +152,14 @@ class TransactionParserAgent:
         text: str, 
         user_data: Optional[UserContextData] = None
     ) -> ParsedTransaction:
-        """
-        Parse natural language text into structured transaction
-        
-        Args:
-            text: Natural language transaction description
-            user_data: User's wallets and categories for context
-            
-        Returns:
-            ParsedTransaction: Structured transaction data
-            
-        Raises:
-            Exception: If parsing fails
-        """
         try:
-            # Build prompt with context
             user_prompt = self._build_user_prompt(text, user_data)
-            
             logger.info(f"Parsing transaction: {text}")
             logger.debug(f"Full prompt: {user_prompt}")
             
-            # Run AI agent
             result = await self.agent.run(user_prompt)
-            
             logger.info(f"Parse result: {result.data}")
             
-            # Convert to ParsedTransaction
             return ParsedTransaction(
                 type=result.data.type,
                 amount=result.data.amount,
@@ -210,16 +175,10 @@ class TransactionParserAgent:
             raise Exception(f"AI parsing failed: {str(e)}")
 
 
-# ============================================
-# Global Agent Instance
-# ============================================
-
-# Singleton instance - initialized once
 _agent_instance: Optional[TransactionParserAgent] = None
 
 
 def get_ai_agent() -> TransactionParserAgent:
-    """Get or create AI agent singleton instance"""
     global _agent_instance
     if _agent_instance is None:
         _agent_instance = TransactionParserAgent()

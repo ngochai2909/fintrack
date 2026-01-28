@@ -17,6 +17,7 @@ const wallets_module_1 = require("./modules/wallets/wallets.module");
 const categories_module_1 = require("./modules/categories/categories.module");
 const transactions_module_1 = require("./modules/transactions/transactions.module");
 const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
+const ai_module_1 = require("./modules/ai/ai.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -33,6 +34,7 @@ exports.AppModule = AppModule = __decorate([
             categories_module_1.CategoriesModule,
             transactions_module_1.TransactionsModule,
             dashboard_module_1.DashboardModule,
+            ai_module_1.AiModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

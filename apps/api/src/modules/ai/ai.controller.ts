@@ -1,6 +1,3 @@
-/**
- * AI Controller - Endpoints for AI-powered transaction parsing
- */
 import {
   Controller,
   Post,
@@ -12,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AiService } from './ai.service';
 import {
   ParseTransactionDto,
@@ -24,9 +21,6 @@ import {
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
-  /**
-   * Test endpoint to check AI service connectivity
-   */
   @Get('test')
   @ApiOperation({
     summary: 'Test AI service',
@@ -43,10 +37,6 @@ export class AiController {
     };
   }
 
-  /**
-   * Parse natural language text (without saving to DB)
-   * Useful for preview/testing
-   */
   @Post('parse')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -58,18 +48,11 @@ export class AiController {
   })
   async parseTransaction(
     @Body() dto: ParseTransactionDto,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
-    // For parse-only, we still want to provide user context
-    // So we could enhance this to fetch user's wallets/categories
-    // For now, just pass through to AI service
     return this.aiService.parseTransaction(dto);
   }
 
-  /**
-   * Parse and create transaction in one go
-   * This is the main endpoint for creating transactions via AI
-   */
   @Post('transactions')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -81,7 +64,7 @@ export class AiController {
   })
   async createTransactionFromAi(
     @Body() dto: CreateTransactionFromAiDto,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.aiService.parseAndCreateTransaction(userId, dto);
   }

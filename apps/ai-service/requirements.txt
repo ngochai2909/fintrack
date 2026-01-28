@@ -8,6 +8,7 @@ pydantic-settings==2.6.1
 
 # AI & LLM
 pydantic-ai==0.0.14
+griffe>=1.0.0
 httpx==0.28.1
 
 # CORS & Middleware

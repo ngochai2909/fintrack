@@ -4,24 +4,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables"""
-    
-    # Server Configuration
     PORT: int = 8001
     HOST: str = "0.0.0.0"
     ENVIRONMENT: Literal["development", "production", "staging"] = "development"
     
-    # AI Model Configuration
     GEMINI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     
     AI_MODEL_PROVIDER: Literal["gemini", "openrouter"] = "gemini"
     AI_MODEL_NAME: str = "gemini-1.5-flash"
     
-    # CORS Settings
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
-    
-    # Logging
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     
     model_config = SettingsConfigDict(

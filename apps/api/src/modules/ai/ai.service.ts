@@ -1,6 +1,3 @@
-/**
- * AI Service - Handles communication with FastAPI AI Service
- */
 import {
   Injectable,
   Logger,
@@ -27,16 +24,12 @@ export class AiService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    // Get AI Service URL from environment
     this.aiServiceUrl =
       this.configService.get<string>('AI_SERVICE_URL') ||
       'http://localhost:8001';
     this.logger.log(`AI Service URL: ${this.aiServiceUrl}`);
   }
 
-  /**
-   * Call FastAPI AI Service to parse natural language text
-   */
   async parseTransaction(
     dto: ParseTransactionDto,
   ): Promise<ParseTransactionResponseDto> {
@@ -84,9 +77,6 @@ export class AiService {
     }
   }
 
-  /**
-   * Parse transaction and save to database
-   */
   async parseAndCreateTransaction(
     userId: string,
     dto: CreateTransactionFromAiDto,
@@ -94,7 +84,6 @@ export class AiService {
     try {
       this.logger.log(`Creating transaction from AI for user: ${userId}`);
 
-      // 1. Get user's wallets and categories for context
       const [wallets, categories] = await Promise.all([
         this.prisma.wallet.findMany({
           where: { userId, isActive: true },
@@ -112,7 +101,6 @@ export class AiService {
         throw new BadRequestException('You need to create at least one wallet first');
       }
 
-      // 2. Prepare user context data
       const userContextData: UserContextDataDto = {
         wallets: wallets.map((w) => ({
           id: w.id,
@@ -127,7 +115,6 @@ export class AiService {
         })),
       };
 
-      // 3. Call AI to parse transaction
       const parseResult = await this.parseTransaction({
         text: dto.text,
         user_data: userContextData,
@@ -139,27 +126,24 @@ export class AiService {
 
       const parsedData = parseResult.data;
 
-      // 4. Find or determine wallet
       let walletId = dto.walletId;
       if (!walletId && parsedData.wallet_name) {
-        // Try to find wallet by name
+        const walletName = parsedData.wallet_name.toLowerCase();
         const wallet = wallets.find(
           (w) =>
-            w.name.toLowerCase() === parsedData.wallet_name.toLowerCase() ||
-            w.name.toLowerCase().includes(parsedData.wallet_name.toLowerCase()),
+            w.name.toLowerCase() === walletName ||
+            w.name.toLowerCase().includes(walletName),
         );
         if (wallet) {
           walletId = wallet.id;
         }
       }
 
-      // If still no wallet, use the first one
       if (!walletId) {
         walletId = wallets[0].id;
         this.logger.warn(`No wallet specified, using default: ${wallets[0].name}`);
       }
 
-      // Verify wallet exists and belongs to user
       const wallet = await this.prisma.wallet.findFirst({
         where: { id: walletId, userId },
       });
@@ -168,21 +152,19 @@ export class AiService {
         throw new NotFoundException('Wallet not found');
       }
 
-      // 5. Find or create category
       let categoryId = dto.categoryId;
       if (!categoryId && parsedData.category_name) {
-        // Try to find category by name and type
+        const categoryName = parsedData.category_name.toLowerCase();
         const category = categories.find(
           (c) =>
             c.type === parsedData.type &&
-            (c.name.toLowerCase() === parsedData.category_name.toLowerCase() ||
-              c.name.toLowerCase().includes(parsedData.category_name.toLowerCase())),
+            (c.name.toLowerCase() === categoryName ||
+              c.name.toLowerCase().includes(categoryName)),
         );
 
         if (category) {
           categoryId = category.id;
         } else {
-          // Create new category for user
           this.logger.log(`Creating new category: ${parsedData.category_name}`);
           const newCategory = await this.prisma.category.create({
             data: {
@@ -195,7 +177,6 @@ export class AiService {
         }
       }
 
-      // If still no category, find a default one with matching type
       if (!categoryId) {
         const defaultCategory = categories.find((c) => c.type === parsedData.type);
         if (defaultCategory) {
@@ -207,7 +188,6 @@ export class AiService {
         }
       }
 
-      // 6. Create transaction
       const transaction = await this.prisma.transaction.create({
         data: {
           userId,
@@ -229,7 +209,6 @@ export class AiService {
         },
       });
 
-      // 7. Update wallet balance
       const balanceChange =
         parsedData.type === TransactionType.INCOME
           ? parsedData.amount
