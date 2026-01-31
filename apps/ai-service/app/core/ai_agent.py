@@ -83,7 +83,7 @@ Hãy phân tích chính xác và trả về JSON theo format TransactionParseRes
 
 
 class TransactionParserAgent:
-    """AI Agent to parse natural language into structured transactions"""
+
     
     def __init__(self):
         self.model = self._initialize_model()
@@ -183,3 +183,4 @@ def get_ai_agent() -> TransactionParserAgent:
     if _agent_instance is None:
         _agent_instance = TransactionParserAgent()
     return _agent_instance
+

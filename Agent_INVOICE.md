@@ -19,6 +19,12 @@ Model:
 - https://aistudio.google.com/
 - https://openrouter.ai/models?max_price=0
 
+# Deployment
+Viết docker-compose.yml và HOW_TO_DEPLOY.md deploy tất cả các dịch vụ cần thiết:
+ Postgresql
+ NodeJS
+ FastAPI
+ NextJS
 
 # Feature 2: Telegram nhập liệu
 Mở telegram @bot-tai-chinh
@@ -26,6 +32,7 @@ Input: @tieu TEXT (đổ xăng 19k)
 Output: Đã nhập liệu thành công
 
 - /@thong-ke
+
 
 B. Advanced
 Nhập mục tiêu chi cho từng khoản theo Tháng

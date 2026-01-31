@@ -1,31 +1,50 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { config } from 'dotenv';
+
+// Load .env file before bootstrap
+config();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global prefix for all routes
   app.setGlobalPrefix('api');
 
-  // Enable CORS for frontend
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3001',
     credentials: true,
   });
 
-  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Strip properties that don't have decorators
-      forbidNonWhitelisted: true, // Throw error if non-whitelisted properties are present
-      transform: true, // Transform payloads to DTO instances
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  const port = process.env.PORT ?? 3000;
+  // Swagger API Documentation
+  const config = new DocumentBuilder()
+    .setTitle('FinTrack API')
+    .setDescription('Personal Finance Tracking Application with AI-powered transaction parsing')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('Auth', 'Authentication endpoints')
+    .addTag('Wallets', 'Wallet management')
+    .addTag('Categories', 'Category management')
+    .addTag('Transactions', 'Transaction management')
+    .addTag('AI - Transaction Parsing', 'AI-powered natural language transaction parsing')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  const port = 3000;
   await app.listen(port);
 
   console.log(`🚀 API is running on: http://localhost:${port}/api`);
+  console.log(`📚 Swagger Docs: http://localhost:${port}/api/docs`);
 }
 bootstrap();
