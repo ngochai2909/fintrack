@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
+import { CopilotKit } from "@copilotkit/react-core";
+import { CopilotPopup } from "@copilotkit/react-ui";
+import "@copilotkit/react-ui/styles.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +33,15 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <QueryProvider>
-          {children}
+          <CopilotKit runtimeUrl="/api/copilotkit">
+            {children}
+            <CopilotPopup
+              labels={{
+                title: "FinTrack AI",
+                initial: "Xin chào! Tôi có thể giúp gì cho bạn?",
+              }}
+            />
+          </CopilotKit>
         </QueryProvider>
       </body>
     </html>

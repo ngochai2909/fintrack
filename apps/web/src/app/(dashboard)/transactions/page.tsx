@@ -2,8 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsService } from '@/services/transactions.service';
+import { walletsService } from '@/services/wallets.service';
+import { categoriesService } from '@/services/categories.service';
+import { useCopilotReadable, useCopilotAction } from '@copilotkit/react-core';
 import Link from 'next/link';
-import { Transaction } from '@/types/transaction';
+import { Transaction, CreateTransactionDto } from '@/types/transaction';
 import { TransactionType } from '@/types/category';
 import { useState } from 'react';
 import { formatCardAmount, formatCurrency, formatShortDate } from '@/lib/formatters';
@@ -29,12 +32,121 @@ export default function TransactionsPage() {
     queryFn: () => transactionsService.getAll(),
   });
 
+  // Fetch wallets
+  const { data: wallets } = useQuery({
+    queryKey: ['wallets'],
+    queryFn: () => walletsService.getAll(),
+  });
+
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesService.getAll(),
+  });
+
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => transactionsService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['wallets'] }); // Refresh wallets list (balance changed)
+    },
+  });
+
+  // Create mutation for CopilotKit action
+  const createMutation = useMutation({
+    mutationFn: (data: CreateTransactionDto) => transactionsService.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['wallets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+
+  // 🤖 Share transactions list with CopilotKit
+  useCopilotReadable({
+    description: 'Danh sách tất cả giao dịch của người dùng với thông tin đầy đủ',
+    value: transactions || [],
+  });
+
+  // 🤖 Share wallets with CopilotKit
+  useCopilotReadable({
+    description: 'Danh sách ví của người dùng với số dư và loại tiền tệ',
+    value: wallets || [],
+  });
+
+  // 🤖 Share categories with CopilotKit
+  useCopilotReadable({
+    description: 'Danh sách danh mục thu chi (income/expense) với icon và màu sắc',
+    value: categories || [],
+  });
+
+  // 🤖 Action: Tạo giao dịch mới
+  useCopilotAction({
+    name: 'createTransaction',
+    description: 'Tạo một giao dịch thu hoặc chi mới. Hỏi người dùng về: loại giao dịch (thu/chi), số tiền, ví, danh mục, mô tả.',
+    parameters: [
+      {
+        name: 'type',
+        type: 'string',
+        description: 'Loại giao dịch: INCOME (thu nhập) hoặc EXPENSE (chi tiêu)',
+        required: true,
+      },
+      {
+        name: 'amount',
+        type: 'number',
+        description: 'Số tiền giao dịch (số dương)',
+        required: true,
+      },
+      {
+        name: 'walletId',
+        type: 'string',
+        description: 'ID của ví sẽ ghi nhận giao dịch này',
+        required: true,
+      },
+      {
+        name: 'categoryId',
+        type: 'string',
+        description: 'ID của danh mục phù hợp với loại giao dịch',
+        required: true,
+      },
+      {
+        name: 'description',
+        type: 'string',
+        description: 'Mô tả ngắn gọn về giao dịch',
+        required: false,
+      },
+      {
+        name: 'note',
+        type: 'string',
+        description: 'Ghi chú chi tiết (nếu có)',
+        required: false,
+      },
+    ],
+    handler: async ({ type, amount, walletId, categoryId, description, note }) => {
+      try {
+        const transactionData: CreateTransactionDto = {
+          type: type as TransactionType,
+          amount,
+          walletId,
+          categoryId,
+          description,
+          note,
+          date: new Date().toISOString(),
+        };
+        
+        await createMutation.mutateAsync(transactionData);
+        
+        return {
+          success: true,
+          message: `Đã tạo giao dịch ${type === 'INCOME' ? 'thu nhập' : 'chi tiêu'} ${amount.toLocaleString('vi-VN')} VND thành công!`,
+        };
+      } catch (error: any) {
+        return {
+          success: false,
+          message: `Lỗi khi tạo giao dịch: ${error.message}`,
+        };
+      }
     },
   });
 

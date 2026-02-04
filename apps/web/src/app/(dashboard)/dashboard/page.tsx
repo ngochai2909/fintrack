@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { dashboardService } from '@/services/dashboard.service';
+import { useCopilotReadable } from '@copilotkit/react-core';
 import Link from 'next/link';
 import { TransactionType } from '@/types/category';
 import { formatCardAmount, formatCurrency as formatCurrencyUtil, formatShortDate } from '@/lib/formatters';
@@ -36,6 +37,38 @@ export default function DashboardPage() {
     refetchInterval: 60000, // Refetch every minute
   });
 
+  // 🤖 Share dashboard data with CopilotKit (must be called unconditionally)
+  useCopilotReadable({
+    description: 'Tổng quan tài chính của người dùng, bao gồm số dư, thu nhập, chi tiêu tháng này',
+    value: dashboard ? {
+      totalBalance: dashboard.summary.totalBalance,
+      monthlyIncome: dashboard.summary.monthlyIncome,
+      monthlyExpense: dashboard.summary.monthlyExpense,
+      balanceChange: dashboard.summary.balanceChange,
+      month: dashboard.summary.month,
+    } : null,
+  });
+
+  useCopilotReadable({
+    description: 'Dữ liệu biểu đồ xu hướng 30 ngày - thu nhập và chi tiêu theo ngày',
+    value: dashboard?.charts.dailyTrend || [],
+  });
+
+  useCopilotReadable({
+    description: 'Phân bố thu nhập theo danh mục',
+    value: dashboard?.charts.incomeByCategory || [],
+  });
+
+  useCopilotReadable({
+    description: 'Phân bố chi tiêu theo danh mục',
+    value: dashboard?.charts.expenseByCategory || [],
+  });
+
+  useCopilotReadable({
+    description: 'Các giao dịch gần đây (10 giao dịch mới nhất)',
+    value: dashboard?.recentTransactions || [],
+  });
+
   // Loading state
   if (isLoading) {
     return (
@@ -67,7 +100,6 @@ export default function DashboardPage() {
   }
 
   const { summary, recentTransactions, charts } = dashboard;
-
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
