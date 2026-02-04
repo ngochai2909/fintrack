@@ -64,72 +64,121 @@ export default function TransactionsPage() {
   });
 
   // 🤖 Share transactions list with CopilotKit
-  useCopilotReadable({
-    description: 'Danh sách tất cả giao dịch của người dùng với thông tin đầy đủ',
-    value: transactions || [],
-  });
+  // TEMPORARILY DISABLED to prevent AI state modification attempts
+  // useCopilotReadable({
+  //   description: 'Danh sách tất cả giao dịch của người dùng. Mỗi transaction có: id, type (INCOME/EXPENSE), amount, description, walletId, categoryId, date',
+  //   value: transactions || [],
+  // });
 
-  // 🤖 Share wallets with CopilotKit
-  useCopilotReadable({
-    description: 'Danh sách ví của người dùng với số dư và loại tiền tệ',
-    value: wallets || [],
-  });
+  // 🤖 Share wallets with CopilotKit  
+  // TEMPORARILY DISABLED to prevent AI state modification attempts
+  // useCopilotReadable({
+  //   description: 'Danh sách ví của người dùng. Mỗi wallet có: id (UUID string), name (tên ví như "Ví ngân hàng", "Ví tiền mặt"), balance (số dư), currency. Dùng wallet.id khi tạo transaction.',
+  //   value: wallets || [],
+  // });
 
   // 🤖 Share categories with CopilotKit
-  useCopilotReadable({
-    description: 'Danh sách danh mục thu chi (income/expense) với icon và màu sắc',
-    value: categories || [],
-  });
+  // TEMPORARILY DISABLED to prevent AI state modification attempts
+  // useCopilotReadable({
+  //   description: 'Danh sách danh mục thu chi. Mỗi category có: id (UUID string), name (tên như "Ăn uống", "Xăng xe", "Lương"), type (INCOME/EXPENSE), icon, color. Dùng category.id khi tạo transaction và đảm bảo category.type match với transaction type.',
+  //   value: categories || [],
+  // });
 
   // 🤖 Action: Tạo giao dịch mới
   useCopilotAction({
     name: 'createTransaction',
-    description: 'Tạo một giao dịch thu hoặc chi mới. Hỏi người dùng về: loại giao dịch (thu/chi), số tiền, ví, danh mục, mô tả.',
+    description: `Tạo giao dịch thu hoặc chi mới.
+
+GỌI action này KHI user muốn tạo/ghi/thêm giao dịch.
+
+INPUT cần thiết:
+- type: "INCOME" (thu) hoặc "EXPENSE" (chi)  
+- amount: số tiền (VND)
+- walletName: tên ví (ví dụ: "cash", "ngân hàng", "tiền mặt")
+- categoryName: danh mục (ví dụ: "ăn uống", "xăng xe", "lương")
+- description: mô tả ngắn
+
+VÍ DỤ:
+User: "ghi 30k vào ví cash cho ăn trưa"
+→ createTransaction({
+  type: "EXPENSE",
+  amount: 30000,
+  walletName: "cash",
+  categoryName: "ăn uống",  
+  description: "ăn trưa"
+})`,
     parameters: [
       {
         name: 'type',
         type: 'string',
-        description: 'Loại giao dịch: INCOME (thu nhập) hoặc EXPENSE (chi tiêu)',
+        description: 'INCOME hoặc EXPENSE',
         required: true,
       },
       {
         name: 'amount',
         type: 'number',
-        description: 'Số tiền giao dịch (số dương)',
+        description: 'Số tiền VND (convert: 30k=30000, 1tr5=1500000)',
         required: true,
       },
       {
-        name: 'walletId',
+        name: 'walletName',
         type: 'string',
-        description: 'ID của ví sẽ ghi nhận giao dịch này',
+        description: 'Tên ví: "cash", "ngân hàng", "tiền mặt", etc.',
         required: true,
       },
       {
-        name: 'categoryId',
+        name: 'categoryName',
         type: 'string',
-        description: 'ID của danh mục phù hợp với loại giao dịch',
+        description: 'Tên danh mục: "ăn uống", "xăng xe", "lương", etc.',
         required: true,
       },
       {
         name: 'description',
         type: 'string',
-        description: 'Mô tả ngắn gọn về giao dịch',
+        description: 'Mô tả',
         required: false,
       },
       {
         name: 'note',
         type: 'string',
-        description: 'Ghi chú chi tiết (nếu có)',
+        description: 'Ghi chú',
         required: false,
       },
     ],
-    handler: async ({ type, amount, walletId, categoryId, description, note }) => {
+    handler: async ({ type, amount, walletName, categoryName, description, note }) => {
       try {
+        // Find wallet by name (case-insensitive, partial match)
+        const wallet = wallets?.find(w => 
+          w.name.toLowerCase().includes(walletName.toLowerCase()) ||
+          walletName.toLowerCase().includes(w.name.toLowerCase())
+        );
+        
+        if (!wallet) {
+          return {
+            success: false,
+            message: `Không tìm thấy ví với tên "${walletName}". Các ví hiện có: ${wallets?.map(w => w.name).join(', ')}`,
+          };
+        }
+
+        // Find category by name and type (case-insensitive, partial match)
+        const category = categories?.find(c => 
+          c.type === type &&
+          (c.name.toLowerCase().includes(categoryName.toLowerCase()) ||
+           categoryName.toLowerCase().includes(c.name.toLowerCase()))
+        );
+        
+        if (!category) {
+          return {
+            success: false,
+            message: `Không tìm thấy danh mục "${categoryName}" cho loại ${type}. Các danh mục ${type} hiện có: ${categories?.filter(c => c.type === type).map(c => c.name).join(', ')}`,
+          };
+        }
+
         const transactionData: CreateTransactionDto = {
           type: type as TransactionType,
           amount,
-          walletId,
-          categoryId,
+          walletId: wallet.id,
+          categoryId: category.id,
           description,
           note,
           date: new Date().toISOString(),
@@ -139,7 +188,7 @@ export default function TransactionsPage() {
         
         return {
           success: true,
-          message: `Đã tạo giao dịch ${type === 'INCOME' ? 'thu nhập' : 'chi tiêu'} ${amount.toLocaleString('vi-VN')} VND thành công!`,
+          message: `Đã tạo giao dịch ${type === 'INCOME' ? 'thu nhập' : 'chi tiêu'} ${amount.toLocaleString('vi-VN')} VND vào ví ${wallet.name}, danh mục ${category.name}!`,
         };
       } catch (error: any) {
         return {
