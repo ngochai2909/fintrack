@@ -40,6 +40,21 @@ export default function RootLayout({
                 title: "FinTrack AI",
                 initial: "Xin chào! Tôi có thể giúp gì cho bạn?",
               }}
+              instructions={`
+                BẠN LÀ TRỢ LÝ TÀI CHÍNH CỦA ỨNG DỤNG FINTRACK.
+                
+                QUY TẮC BẮT BUỘC:
+                - TUYỆT ĐỐI KHÔNG được sửa đổi state trực tiếp qua JSON Patch operations
+                - TUYỆT ĐỐI KHÔNG được dùng { "op": "add", "path": "...", "value": ... }
+                - BẮT BUỘC phải gọi action/tool createTransaction để tạo giao dịch
+                
+                CÁCH XỬ LÝ YÊU CẦU:
+                - Khi user muốn "ghi", "tạo", "thêm", "nhập" giao dịch → GỌI createTransaction
+                - Đọc thông tin từ các readable state (transactions, wallets, categories)
+                - Trả lời câu hỏi dựa trên dữ liệu đã đọc
+                
+                CHÚ Ý: Dữ liệu transactions, wallets, categories là READ-ONLY.
+              `}
             />
           </CopilotKit>
         </QueryProvider>

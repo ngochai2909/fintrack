@@ -63,26 +63,7 @@ export default function TransactionsPage() {
     },
   });
 
-  // 🤖 Share transactions list with CopilotKit
-  // TEMPORARILY DISABLED to prevent AI state modification attempts
-  // useCopilotReadable({
-  //   description: 'Danh sách tất cả giao dịch của người dùng. Mỗi transaction có: id, type (INCOME/EXPENSE), amount, description, walletId, categoryId, date',
-  //   value: transactions || [],
-  // });
 
-  // 🤖 Share wallets with CopilotKit  
-  // TEMPORARILY DISABLED to prevent AI state modification attempts
-  // useCopilotReadable({
-  //   description: 'Danh sách ví của người dùng. Mỗi wallet có: id (UUID string), name (tên ví như "Ví ngân hàng", "Ví tiền mặt"), balance (số dư), currency. Dùng wallet.id khi tạo transaction.',
-  //   value: wallets || [],
-  // });
-
-  // 🤖 Share categories with CopilotKit
-  // TEMPORARILY DISABLED to prevent AI state modification attempts
-  // useCopilotReadable({
-  //   description: 'Danh sách danh mục thu chi. Mỗi category có: id (UUID string), name (tên như "Ăn uống", "Xăng xe", "Lương"), type (INCOME/EXPENSE), icon, color. Dùng category.id khi tạo transaction và đảm bảo category.type match với transaction type.',
-  //   value: categories || [],
-  // });
 
   // 🤖 Action: Tạo giao dịch mới
   useCopilotAction({
@@ -107,6 +88,7 @@ User: "ghi 30k vào ví cash cho ăn trưa"
   categoryName: "ăn uống",  
   description: "ăn trưa"
 })`,
+
     parameters: [
       {
         name: 'type',
@@ -145,6 +127,7 @@ User: "ghi 30k vào ví cash cho ăn trưa"
         required: false,
       },
     ],
+    render: undefined,
     handler: async ({ type, amount, walletName, categoryName, description, note }) => {
       try {
         // Find wallet by name (case-insensitive, partial match)

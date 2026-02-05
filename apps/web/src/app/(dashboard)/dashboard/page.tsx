@@ -37,9 +37,8 @@ export default function DashboardPage() {
     refetchInterval: 60000, // Refetch every minute
   });
 
-  // 🤖 Share dashboard data with CopilotKit (must be called unconditionally)
   useCopilotReadable({
-    description: 'Tổng quan tài chính của người dùng, bao gồm số dư, thu nhập, chi tiêu tháng này',
+    description: 'Tổng quan tài chính: totalBalance (tổng số dư tất cả ví), monthlyIncome (thu nhập tháng này), monthlyExpense (chi tiêu tháng này), balanceChange (chênh lệch thu chi), month (tháng hiện tại)',
     value: dashboard ? {
       totalBalance: dashboard.summary.totalBalance,
       monthlyIncome: dashboard.summary.monthlyIncome,
@@ -50,22 +49,22 @@ export default function DashboardPage() {
   });
 
   useCopilotReadable({
-    description: 'Dữ liệu biểu đồ xu hướng 30 ngày - thu nhập và chi tiêu theo ngày',
+    description: 'Biểu đồ xu hướng 30 ngày qua - mỗi ngày có: date (ngày), income (thu nhập ngày đó), expense (chi tiêu ngày đó)',
     value: dashboard?.charts.dailyTrend || [],
   });
 
   useCopilotReadable({
-    description: 'Phân bố thu nhập theo danh mục',
+    description: 'Phân bố thu nhập theo danh mục - mỗi item có: categoryName (tên danh mục), categoryId, amount (tổng tiền), count (số giao dịch)',
     value: dashboard?.charts.incomeByCategory || [],
   });
 
   useCopilotReadable({
-    description: 'Phân bố chi tiêu theo danh mục',
+    description: 'Phân bố chi tiêu theo danh mục - mỗi item có: categoryName (tên danh mục), categoryId, amount (tổng tiền), count (số giao dịch)',
     value: dashboard?.charts.expenseByCategory || [],
   });
 
   useCopilotReadable({
-    description: 'Các giao dịch gần đây (10 giao dịch mới nhất)',
+    description: '10 giao dịch gần đây nhất - mỗi giao dịch có: id, type, amount, description, date, wallet, category',
     value: dashboard?.recentTransactions || [],
   });
 
