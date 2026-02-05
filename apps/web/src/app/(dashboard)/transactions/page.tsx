@@ -4,9 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { transactionsService } from '@/services/transactions.service';
 import { walletsService } from '@/services/wallets.service';
 import { categoriesService } from '@/services/categories.service';
-import { useCopilotReadable, useCopilotAction } from '@copilotkit/react-core';
 import Link from 'next/link';
-import { Transaction, CreateTransactionDto } from '@/types/transaction';
+import { Transaction } from '@/types/transaction';
 import { TransactionType } from '@/types/category';
 import { useState } from 'react';
 import { formatCardAmount, formatCurrency, formatShortDate } from '@/lib/formatters';
@@ -53,134 +52,14 @@ export default function TransactionsPage() {
     },
   });
 
-  // Create mutation for CopilotKit action
-  const createMutation = useMutation({
-    mutationFn: (data: CreateTransactionDto) => transactionsService.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['wallets'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    },
-  });
 
+  // ═══════════════════════════════════════════════════════════════
+  // 🤖 CopilotKit Action: Moved to GLOBAL level
+  // ═══════════════════════════════════════════════════════════════
+  // createTransaction action is now available globally via useFinTrackActions()
+  // in (dashboard)/layout.tsx - No need to define it here anymore!
+  // This ensures AI can create transactions from ANY page (dashboard, wallets, etc.)
 
-
-  // 🤖 Action: Tạo giao dịch mới
-  useCopilotAction({
-    name: 'createTransaction',
-    description: `Tạo giao dịch thu hoặc chi mới.
-
-GỌI action này KHI user muốn tạo/ghi/thêm giao dịch.
-
-INPUT cần thiết:
-- type: "INCOME" (thu) hoặc "EXPENSE" (chi)  
-- amount: số tiền (VND)
-- walletName: tên ví (ví dụ: "cash", "ngân hàng", "tiền mặt")
-- categoryName: danh mục (ví dụ: "ăn uống", "xăng xe", "lương")
-- description: mô tả ngắn
-
-VÍ DỤ:
-User: "ghi 30k vào ví cash cho ăn trưa"
-→ createTransaction({
-  type: "EXPENSE",
-  amount: 30000,
-  walletName: "cash",
-  categoryName: "ăn uống",  
-  description: "ăn trưa"
-})`,
-
-    parameters: [
-      {
-        name: 'type',
-        type: 'string',
-        description: 'INCOME hoặc EXPENSE',
-        required: true,
-      },
-      {
-        name: 'amount',
-        type: 'number',
-        description: 'Số tiền VND (convert: 30k=30000, 1tr5=1500000)',
-        required: true,
-      },
-      {
-        name: 'walletName',
-        type: 'string',
-        description: 'Tên ví: "cash", "ngân hàng", "tiền mặt", etc.',
-        required: true,
-      },
-      {
-        name: 'categoryName',
-        type: 'string',
-        description: 'Tên danh mục: "ăn uống", "xăng xe", "lương", etc.',
-        required: true,
-      },
-      {
-        name: 'description',
-        type: 'string',
-        description: 'Mô tả',
-        required: false,
-      },
-      {
-        name: 'note',
-        type: 'string',
-        description: 'Ghi chú',
-        required: false,
-      },
-    ],
-    render: undefined,
-    handler: async ({ type, amount, walletName, categoryName, description, note }) => {
-      try {
-        // Find wallet by name (case-insensitive, partial match)
-        const wallet = wallets?.find(w => 
-          w.name.toLowerCase().includes(walletName.toLowerCase()) ||
-          walletName.toLowerCase().includes(w.name.toLowerCase())
-        );
-        
-        if (!wallet) {
-          return {
-            success: false,
-            message: `Không tìm thấy ví với tên "${walletName}". Các ví hiện có: ${wallets?.map(w => w.name).join(', ')}`,
-          };
-        }
-
-        // Find category by name and type (case-insensitive, partial match)
-        const category = categories?.find(c => 
-          c.type === type &&
-          (c.name.toLowerCase().includes(categoryName.toLowerCase()) ||
-           categoryName.toLowerCase().includes(c.name.toLowerCase()))
-        );
-        
-        if (!category) {
-          return {
-            success: false,
-            message: `Không tìm thấy danh mục "${categoryName}" cho loại ${type}. Các danh mục ${type} hiện có: ${categories?.filter(c => c.type === type).map(c => c.name).join(', ')}`,
-          };
-        }
-
-        const transactionData: CreateTransactionDto = {
-          type: type as TransactionType,
-          amount,
-          walletId: wallet.id,
-          categoryId: category.id,
-          description,
-          note,
-          date: new Date().toISOString(),
-        };
-        
-        await createMutation.mutateAsync(transactionData);
-        
-        return {
-          success: true,
-          message: `Đã tạo giao dịch ${type === 'INCOME' ? 'thu nhập' : 'chi tiêu'} ${amount.toLocaleString('vi-VN')} VND vào ví ${wallet.name}, danh mục ${category.name}!`,
-        };
-      } catch (error: any) {
-        return {
-          success: false,
-          message: `Lỗi khi tạo giao dịch: ${error.message}`,
-        };
-      }
-    },
-  });
 
   // Handle delete
   const handleDelete = async (transaction: Transaction) => {
