@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCopilotReadable, useCopilotAction } from '@copilotkit/react-core';
 import { transactionsService } from '@/services/transactions.service';
@@ -126,23 +127,22 @@ export function useFinTrackActions() {
   });
 
   // ═══════════════════════════════════════════════════════════════
-  // EXPOSE DATA TO AI (READ-ONLY)
+  // EXPOSE DATA TO AI (READ-ONLY) - MEMOIZED TO PREVENT INFINITE LOOP
   // ═══════════════════════════════════════════════════════════════
 
-  useCopilotReadable({
-    description: 'Danh sách ví (READ-ONLY) - các ví: ' + 
-      (wallets?.map(w => `${w.name} (id: ${w.id})`).join(', ') || 'chưa có ví'),
-    value: wallets?.map(w => ({ id: w.id, name: w.name, balance: w.balance, currency: w.currency })) || [],
-  });
+  // Memoize data to prevent unnecessary re-renders
+  const walletsData = useMemo(
+    () => wallets?.map(w => ({ id: w.id, name: w.name, balance: w.balance, currency: w.currency })) || [],
+    [wallets]
+  );
 
-  useCopilotReadable({
-    description: 'Danh sách danh mục (READ-ONLY) - mỗi danh mục có: id, name, type (INCOME/EXPENSE/TRANSFER), icon, color',
-    value: categories?.map(c => ({ id: c.id, name: c.name, type: c.type, icon: c.icon, color: c.color })) || [],
-  });
+  const categoriesData = useMemo(
+    () => categories?.map(c => ({ id: c.id, name: c.name, type: c.type, icon: c.icon, color: c.color })) || [],
+    [categories]
+  );
 
-  useCopilotReadable({
-    description: 'Danh sách giao dịch (READ-ONLY) - để tìm giao dịch cần sửa/xóa',
-    value: transactions?.map(t => ({
+  const transactionsData = useMemo(
+    () => transactions?.slice(0, 20).map(t => ({
       id: t.id,
       amount: t.amount,
       type: t.type,
@@ -151,6 +151,28 @@ export function useFinTrackActions() {
       walletName: t.wallet?.name,
       categoryName: t.category?.name,
     })) || [],
+    [transactions]
+  );
+
+  const walletsDescription = useMemo(
+    () => 'Danh sách ví (READ-ONLY) - các ví: ' + 
+      (wallets?.map(w => `${w.name} (id: ${w.id})`).join(', ') || 'chưa có ví'),
+    [wallets]
+  );
+
+  useCopilotReadable({
+    description: walletsDescription,
+    value: walletsData,
+  });
+
+  useCopilotReadable({
+    description: 'Danh sách danh mục (READ-ONLY) - mỗi danh mục có: id, name, type (INCOME/EXPENSE/TRANSFER), icon, color',
+    value: categoriesData,
+  });
+
+  useCopilotReadable({
+    description: 'Danh sách 20 giao dịch gần nhất (READ-ONLY) - để tìm giao dịch cần sửa/xóa',
+    value: transactionsData,
   });
 
   // ═══════════════════════════════════════════════════════════════

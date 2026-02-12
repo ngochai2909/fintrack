@@ -1,13 +1,6 @@
 import Link from 'next/link';
 
-/**
- * LANDING PAGE - FinTrack
- * 
- * Welcome page with:
- * - Hero section
- * - Feature highlights
- * - Login and Register CTAs
- */
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
